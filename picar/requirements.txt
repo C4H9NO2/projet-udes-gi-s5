@@ -1,0 +1,5 @@
+# Versions installées dans le .venv fourni par le prof (Raspberry Pi, Python 3.9)
+websockets==12.0
+RPi.GPIO==0.7.1
+pigpio==1.78
+smbus==1.1.post2
