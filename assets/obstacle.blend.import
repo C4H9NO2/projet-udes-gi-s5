@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dhw27gk6nbfgu"
-path="res://.godot/imported/SHC Free Cybertruck.blend-bd8116590ccf6afcfabb3e64a09c9ea2.scn"
+uid="uid://dw8264gchc35g"
+path="res://.godot/imported/obstacle.blend-811a79f3d01798afc69682f068e56370.scn"
 
 [deps]
 
-source_file="res://assets/3d/uploads_files_2176038_SHC+Free+Cybertruck/SHC Free Cybertruck.blend"
-dest_files=["res://.godot/imported/SHC Free Cybertruck.blend-bd8116590ccf6afcfabb3e64a09c9ea2.scn"]
+source_file="res://assets/obstacle.blend"
+dest_files=["res://.godot/imported/obstacle.blend-811a79f3d01798afc69682f068e56370.scn"]
 
 [params]
 
@@ -17,6 +17,8 @@ nodes/root_type=""
 nodes/root_name=""
 nodes/apply_root_scale=true
 nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_node_type_suffixes=true
 meshes/ensure_tangents=true
 meshes/generate_lods=true
 meshes/create_shadow_meshes=true
@@ -28,11 +30,11 @@ animation/import=true
 animation/fps=30
 animation/trimming=false
 animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
 import_script/path=""
 _subresources={}
-gltf/naming_version=1
-gltf/embedded_image_handling=1
 blender/nodes/visible=0
+blender/nodes/active_collection_only=false
 blender/nodes/punctual_lights=true
 blender/nodes/cameras=true
 blender/nodes/custom_properties=true
@@ -40,6 +42,7 @@ blender/nodes/modifiers=1
 blender/meshes/colors=false
 blender/meshes/uvs=true
 blender/meshes/normals=true
+blender/meshes/export_geometry_nodes_instances=false
 blender/meshes/tangents=true
 blender/meshes/skins=2
 blender/meshes/export_bones_deforming_mesh_only=false
