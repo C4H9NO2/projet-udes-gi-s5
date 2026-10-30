@@ -1,0 +1,7 @@
+{
+  "acceleration_max_m_s2": 0.72,
+  "deceleration_max_m_s2": 0.72,
+  "vitesse_m_s_par_unite_pwm": 0.005,
+  "angle_braquage_max_deg": 45,
+  "vitesse_braquage_deg_s": 300
+}

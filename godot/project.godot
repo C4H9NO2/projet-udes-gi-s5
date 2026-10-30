@@ -15,6 +15,10 @@ run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+Config="*res://scripts/config.gd"
+
 [display]
 
 window/size/viewport_width=1920
@@ -48,3 +52,16 @@ xbox_controller_inputs={
 , Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":-1,"axis":5,"axis_value":1.0,"script":null)
 ]
 }
+
+[layer_names]
+
+3d_physics/layer_1="sol"
+3d_physics/layer_2="ligne"
+3d_physics/layer_3="voiture"
+3d_physics/layer_4="bille"
+3d_physics/layer_5="obstacle"
+
+[physics]
+
+common/physics_ticks_per_second=240
+common/max_physics_steps_per_frame=16

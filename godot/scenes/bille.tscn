@@ -1,0 +1,32 @@
+[gd_scene load_steps=6 format=3 uid="uid://buwfg82ftv1bb"]
+
+[ext_resource type="Script" uid="uid://cotuiflv4fh4a" path="res://scripts/bille.gd" id="1_jc8t6"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_5oqy1"]
+friction = 0.5
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_jc8t6"]
+radius = 0.008
+
+[sub_resource type="SphereMesh" id="SphereMesh_i6spn"]
+radius = 0.008
+height = 0.015
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_okm7a"]
+albedo_color = Color(0.567376, 0.357949, 0.830088, 1)
+
+[node name="bille" type="RigidBody3D"]
+collision_layer = 8
+collision_mask = 21
+mass = 0.005
+physics_material_override = SubResource("PhysicsMaterial_5oqy1")
+can_sleep = false
+continuous_cd = true
+script = ExtResource("1_jc8t6")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_jc8t6")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_i6spn")
+surface_material_override/0 = SubResource("StandardMaterial3D_okm7a")
