@@ -9,7 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://cuhq6ryhn23tn" path="res://scenes/picar.tscn" id="8_4c57u"]
 [ext_resource type="PackedScene" uid="uid://difir3bb2pwv4" path="res://assets/parcours.blend" id="8_kek77"]
 [ext_resource type="PackedScene" uid="uid://buwfg82ftv1bb" path="res://scenes/bille.tscn" id="9_efxa6"]
-[ext_resource type="Script" path="res://scripts/camera_libre.gd" id="10_4c57u"]
+[ext_resource type="Script" uid="uid://spoxxauegi68" path="res://scripts/camera_libre.gd" id="10_4c57u"]
 
 [sub_resource type="GDScript" id="GDScript_d2gei"]
 
@@ -44,6 +44,7 @@ size = Vector3(4, 0.1, 4)
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dg77c"]
 
 [node name="Main" type="Node3D"]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
 script = ExtResource("1_eka3w")
 
 [node name="NetworkFSM" type="Node" parent="." node_paths=PackedStringArray("current_state")]
@@ -145,7 +146,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_dg77c")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.655685, 0, 0.305713)
 
 [node name="bille" parent="." instance=ExtResource("9_efxa6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.650448, 0.168115, 0.153065)
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0.650448, 0.168115, 0.153065)
 chemin_point_depart = NodePath("../PiCar/position_bille")
 
 [node name="Caméra libre" type="Camera3D" parent="."]
