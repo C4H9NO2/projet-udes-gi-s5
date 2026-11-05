@@ -30,6 +30,7 @@ func _ready():
 	ray = get_node("capteur_ultrasons")
 	lfs = $capteur_ligne
 	nfsm = $"../NetworkFSM"
+	_recuperer_roues()
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -227,7 +228,12 @@ func average(numbers: Array) -> float:
 #simulation deplacement de la voiture
 #Transforme speed (0 a 1) et steer_dir (-1 a 1) du code des profs
 #en vitesse (m/s) et angle de roues, avec les limites du config.json.
+
 const EMPATTEMENT = 0.142	#distance entre les essieux (m) (picar.blend)
+const RAYON_ROUE = 0.0325	#rayon des roues (m) (picar.blend)
+const VOIE = 0.11	# distance entre les centres des roues gauche/droite (m)
+const X_ROUE_G = -VOIE * 0.5	# position en x du centre de la roue gauche (m)
+const X_ROUE_D = VOIE * 0.5	# position en x du centre de la roue droite (m)
 
 @export var delai_depart_s := 1.0	#attendre que la bille se pose avant de partir
 @export var mode_test_acceleration := false	#ligne droite, ignore la ligne
@@ -237,6 +243,24 @@ const EMPATTEMENT = 0.142	#distance entre les essieux (m) (picar.blend)
 var vitesse_actuelle := 0.0
 var angle_actuel := 0.0
 var temps_ecoule := 0.0
+
+#roues (pour pouvoir les animer)
+var roue_av_g: Node3D = null
+var roue_av_d: Node3D = null
+var roue_ar_g: Node3D = null
+var roue_ar_d: Node3D = null
+
+# rotation actuelles des roues
+var spin_av_g := 0.0
+var spin_av_d := 0.0
+var spin_ar_g := 0.0
+var spin_ar_d := 0.0
+
+func _recuperer_roues() -> void:
+	roue_av_g = find_child("roue_av_g", true, false) as Node3D
+	roue_av_d = find_child("roue_av_d", true, false) as Node3D
+	roue_ar_g = find_child("roue_ar_g", true, false) as Node3D
+	roue_ar_d = find_child("roue_ar_d", true, false) as Node3D
 
 func deplacer(delta: float) -> void:
 	temps_ecoule += delta
@@ -265,3 +289,38 @@ func deplacer(delta: float) -> void:
 	t.basis = t.basis.rotated(Vector3.UP, omega * delta)
 	t.origin += -t.basis.z * vitesse_actuelle * delta
 	global_transform = t
+
+	_animer_roues(delta)
+
+func _animer_roues(delta: float) -> void:
+	if roue_av_g == null or roue_av_d == null or roue_ar_g == null or roue_ar_d == null:
+		return
+
+	var courbure := tan(deg_to_rad(angle_actuel)) / EMPATTEMENT
+
+	# chaque roue avant pointe dans la direction de sa propre vitesse (tan(angle) = EMPATTEMENT / (R + x)).
+	var angle_av_g := atan2(EMPATTEMENT * courbure, 1.0 + X_ROUE_G * courbure)
+	var angle_av_d := atan2(EMPATTEMENT * courbure, 1.0 + X_ROUE_D * courbure)
+
+	# chaque roue roule a sa propre vitesse (rayons de courbure differents)
+	var sens := signf(vitesse_actuelle)
+	spin_ar_g = wrapf(spin_ar_g + (sens * _vitesse_roue(courbure, X_ROUE_G, false) / RAYON_ROUE * delta), -PI, PI)
+	spin_ar_d = wrapf(spin_ar_d + (sens * _vitesse_roue(courbure, X_ROUE_D, false) / RAYON_ROUE * delta), -PI, PI)
+	spin_av_g = wrapf(spin_av_g + (sens * _vitesse_roue(courbure, X_ROUE_G, true) / RAYON_ROUE * delta), -PI, PI)
+	spin_av_d = wrapf(spin_av_d + (sens * _vitesse_roue(courbure, X_ROUE_D, true) / RAYON_ROUE * delta), -PI, PI)
+
+	# braquage autour de Y puis roulage autour de l'axe X
+	roue_av_g.rotation = Vector3(spin_av_g, angle_av_g, 0.0)
+	roue_av_d.rotation = Vector3(spin_av_d, angle_av_d, 0.0)
+	roue_ar_g.rotation = Vector3(spin_ar_g, 0.0, 0.0)
+	roue_ar_d.rotation = Vector3(spin_ar_d, 0.0, 0.0)
+
+#vitesse de roulement (m/s) d'une roue situee située à la position "x" en x par rapport au centre de la voiture
+#v_roue = |omega| * rayon_de_courbure_de_la_roue.
+func _vitesse_roue(courbure: float, x: float, avant: bool) -> float:
+	var v := absf(vitesse_actuelle)
+	var dx := 1.0 + x * courbure
+	if avant:
+		var dl := EMPATTEMENT * courbure
+		return v * sqrt(dx * dx + dl * dl)
+	return v * absf(dx)

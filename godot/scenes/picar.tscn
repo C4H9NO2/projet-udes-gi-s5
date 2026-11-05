@@ -1,16 +1,21 @@
-[gd_scene load_steps=9 format=3 uid="uid://cuhq6ryhn23tn"]
+[gd_scene load_steps=11 format=3 uid="uid://cuhq6ryhn23tn"]
 
 [ext_resource type="Script" uid="uid://cp202pm1s1eic" path="res://scripts/picar_raycast.gd" id="1_41qij"]
 [ext_resource type="PackedScene" uid="uid://dkfs7hxsn8onr" path="res://assets/picar.blend" id="1_d2d5q"]
 [ext_resource type="Script" uid="uid://cnjdegphh6orc" path="res://scripts/capteur_ultrasons.gd" id="2_fgegr"]
 [ext_resource type="Script" uid="uid://cj3dhvf65fvrd" path="res://scenes/capteur_ligne.gd" id="2_ftahi"]
 [ext_resource type="PackedScene" uid="uid://d1snkvvda4vrh" path="res://assets/plaquette_blender_scale.blend" id="5_agq14"]
+[ext_resource type="Texture2D" uid="uid://efaxtc25yv2h" path="res://assets/texture_roue.png" id="6_roue"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_xgyi6"]
 friction = 0.5
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fgegr"]
 albedo_color = Color(0, 0.590835, 0.639701, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_roue"]
+albedo_texture = ExtResource("6_roue")
+roughness = 0.9
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_fgegr"]
 size = Vector3(0.08, 0.03, 0.19)
@@ -33,16 +38,16 @@ surface_material_override/0 = SubResource("StandardMaterial3D_fgegr")
 surface_material_override/0 = SubResource("StandardMaterial3D_fgegr")
 
 [node name="roue_ar_d" parent="modele/boite" index="2"]
-surface_material_override/0 = SubResource("StandardMaterial3D_fgegr")
+surface_material_override/0 = SubResource("StandardMaterial3D_roue")
 
 [node name="roue_ar_g" parent="modele/boite" index="3"]
-surface_material_override/0 = SubResource("StandardMaterial3D_fgegr")
+surface_material_override/0 = SubResource("StandardMaterial3D_roue")
 
 [node name="roue_av_d" parent="modele/boite" index="4"]
-surface_material_override/0 = SubResource("StandardMaterial3D_fgegr")
+surface_material_override/0 = SubResource("StandardMaterial3D_roue")
 
 [node name="roue_av_g" parent="modele/boite" index="5"]
-surface_material_override/0 = SubResource("StandardMaterial3D_fgegr")
+surface_material_override/0 = SubResource("StandardMaterial3D_roue")
 
 [node name="collision_boite" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.035, -0.072)
