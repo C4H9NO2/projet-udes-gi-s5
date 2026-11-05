@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://cuhq6ryhn23tn"]
+[gd_scene load_steps=13 format=3 uid="uid://cuhq6ryhn23tn"]
 
 [ext_resource type="Script" uid="uid://cp202pm1s1eic" path="res://scripts/picar_raycast.gd" id="1_41qij"]
 [ext_resource type="PackedScene" uid="uid://dkfs7hxsn8onr" path="res://assets/picar.blend" id="1_d2d5q"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://cj3dhvf65fvrd" path="res://scenes/capteur_ligne.gd" id="2_ftahi"]
 [ext_resource type="PackedScene" uid="uid://d1snkvvda4vrh" path="res://assets/plaquette_blender_scale.blend" id="5_agq14"]
 [ext_resource type="Texture2D" uid="uid://efaxtc25yv2h" path="res://assets/texture_roue.png" id="6_roue"]
+[ext_resource type="Texture2D" uid="uid://db5yblx2a600u" path="res://assets/texture-plaquette.png" id="7_y562d"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_xgyi6"]
 friction = 0.5
@@ -19,6 +20,13 @@ roughness = 0.9
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_fgegr"]
 size = Vector3(0.08, 0.03, 0.19)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l7qtk"]
+albedo_texture = ExtResource("7_y562d")
+roughness = 0.09
+rim_tint = 0.37
+uv1_scale = Vector3(-0.04, -0.04, -0.04)
+uv1_triplanar = true
 
 [node name="PiCar" type="AnimatableBody3D"]
 collision_layer = 4
@@ -99,4 +107,11 @@ far = 2000.0
 [node name="plaquette_blender_scale" parent="." instance=ExtResource("5_agq14")]
 transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0.066, -0.142)
 
+[node name="PiCarFrame3_V2b" parent="plaquette_blender_scale" index="0"]
+surface_material_override/0 = SubResource("StandardMaterial3D_l7qtk")
+
+[node name="CollisionShape3D" parent="plaquette_blender_scale/PiCarFrame3_V2b/StaticBody3D" index="0"]
+visible = false
+
 [editable path="modele"]
+[editable path="plaquette_blender_scale"]
