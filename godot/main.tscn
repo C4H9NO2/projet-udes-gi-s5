@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://bk5l7umgip4v5"]
+[gd_scene load_steps=21 format=3 uid="uid://bk5l7umgip4v5"]
 
 [ext_resource type="Script" uid="uid://tq58jihq45r4" path="res://scripts/main.gd" id="1_eka3w"]
 [ext_resource type="Script" uid="uid://xfwg5cs2hgt0" path="res://addons/finite_state_machine/scripts/finite_state_machine.gd" id="2_wl1fq"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://cuhq6ryhn23tn" path="res://scenes/picar.tscn" id="8_4c57u"]
 [ext_resource type="PackedScene" uid="uid://difir3bb2pwv4" path="res://assets/parcours.blend" id="8_kek77"]
 [ext_resource type="PackedScene" uid="uid://buwfg82ftv1bb" path="res://scenes/bille.tscn" id="9_efxa6"]
+[ext_resource type="Script" path="res://scripts/camera_libre.gd" id="10_4c57u"]
 
 [sub_resource type="GDScript" id="GDScript_d2gei"]
 
@@ -99,6 +100,17 @@ text = "Connect"
 layout_mode = 2
 text = "Quit"
 
+[node name="Toggle Caméra libre" type="CheckBox" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -180.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = 34.0
+grow_horizontal = 0
+text = "Caméra libre"
+
 [node name="parcours" parent="." instance=ExtResource("8_kek77")]
 transform = Transform3D(0.001, 0, 0, 0, 0.001, 0, 0, 0, 0.001, 0.482, -0.009, 0.088)
 
@@ -136,8 +148,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.655685, 0, 0.305713)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.650448, 0.168115, 0.153065)
 chemin_point_depart = NodePath("../PiCar/position_bille")
 
+[node name="Caméra libre" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, 0)
+script = ExtResource("10_4c57u")
+speed = 0.745
+
 [connection signal="toggled" from="GridContainer/CheckBox" to="." method="_on_check_box_toggled"]
 [connection signal="pressed" from="GridContainer/btn_Connect" to="." method="_on_connect_pressed"]
 [connection signal="pressed" from="GridContainer/btn_Quit" to="." method="_on_quit_pressed"]
+[connection signal="toggled" from="Toggle Caméra libre" to="." method="_on_camera_toggle_toggled"]
 
 [editable path="parcours"]

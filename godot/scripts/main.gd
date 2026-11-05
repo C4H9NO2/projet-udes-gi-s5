@@ -32,6 +32,12 @@ func _on_connect_pressed():
 			get_node("AspectRatioContainer/GridContainer/lb_ConnectionStatusPackets").text = "Wrong IP Address!"
 
 
+func _on_camera_toggle_toggled(toggled_on):
+	$PiCar/Camera3D.current = not toggled_on
+	$"Caméra libre".current = toggled_on
+	if not toggled_on:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
 func _on_check_box_toggled(toggled_on):
 	if toggled_on:
 		$GridContainer/le_IpAdress.text = "127.0.0.1"
