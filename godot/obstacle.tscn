@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://b6kvdu31usv5p"]
+
+[ext_resource type="PackedScene" uid="uid://dw8264gchc35g" path="res://assets/obstacle.blend" id="1_sl1jc"]
+
+[node name="obstacle" instance=ExtResource("1_sl1jc")]
+
+[node name="StaticBody3D" parent="Cube" index="0"]
+collision_layer = 16
