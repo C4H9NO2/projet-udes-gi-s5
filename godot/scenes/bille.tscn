@@ -10,7 +10,7 @@ radius = 0.008
 
 [sub_resource type="SphereMesh" id="SphereMesh_i6spn"]
 radius = 0.008
-height = 0.015
+height = 0.016
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_okm7a"]
 albedo_color = Color(0.567376, 0.357949, 0.830088, 1)
@@ -25,8 +25,10 @@ continuous_cd = true
 script = ExtResource("1_jc8t6")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
 shape = SubResource("SphereShape3D_jc8t6")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
 mesh = SubResource("SphereMesh_i6spn")
 surface_material_override/0 = SubResource("StandardMaterial3D_okm7a")
