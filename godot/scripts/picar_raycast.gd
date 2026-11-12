@@ -29,6 +29,8 @@ var distance_arret = 0.0
 var accel_max = 0.0
 var temps_pause_bille = 0.0
 var direction_contournerment = 0.0
+var trim_direction_deg = 0.0
+var trim_direction_normalise = 0.0
 
 
 # How quickly the car turns
@@ -54,6 +56,8 @@ func _ready():
 	distance_arret = Config.donnees.get("distance_arret")
 	temps_pause_bille = Config.donnees.get("temps_pause_bille")
 	direction_contournerment = Config.donnees.get("direction_contournerment")
+	trim_direction_deg = Config.donnees.get("trim_direction_deg", 0.0)
+	trim_direction_normalise = trim_direction_deg / maxf(Config.donnees.get("angle_braquage_max_deg", 45.0), 0.001)
 	
 	_recuperer_roues()
 
@@ -72,10 +76,10 @@ func _process(delta):
 		#print(nfsm.data_received['line_follower'])
 		if manual_control_enabled:
 			nfsm.data_to_send["velocity"] = manual_velocity
-			nfsm.data_to_send["direction"] = manual_direction
+			nfsm.data_to_send["direction"] = clampf(manual_direction + trim_direction_normalise, -1.0, 1.0)
 		else:
 			nfsm.data_to_send["velocity"] = vitesse / maxf(vitesse_m_s_par_unite_pwm, 0.001)
-			nfsm.data_to_send["direction"] = steer_dir
+			nfsm.data_to_send["direction"] = clampf(steer_dir + trim_direction_normalise, -1.0, 1.0)
 		
 		lfs_simulated_ignored = true
 	else:

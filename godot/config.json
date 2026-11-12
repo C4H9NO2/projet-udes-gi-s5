@@ -7,6 +7,7 @@
 	"vitesse_m_s_par_unite_pwm": 0.5769230769,
   
 	"angle_braquage_max_deg": 45,
+	"trim_direction_deg": -8.5,
 	
 	"distance_arret": 1.3,
 	
