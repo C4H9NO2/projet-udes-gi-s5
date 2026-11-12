@@ -18,7 +18,7 @@ _current_sensors_values = {"distance": -1, "line_follower": [0, 0, 0, 0, 0]}
 
 def _read_distance():
     """
-    Lit et renvoie la istance en cm lue par le capteur a ultrasons (-1 si echec).
+    Lit et renvoie la distance en cm lue par le capteur a ultrasons (-1 si echec).
     """
     try:
         distance = _ultrasonic.distance()
@@ -27,14 +27,22 @@ def _read_distance():
         return -1
 
     if distance is None or distance < 0:
+        _logger.debug("Distance invalide lue par le capteur a ultrasons : %r", distance)
         return -1
-    return int(round(distance))
 
-def _read_lines():  
+    distance = int(round(distance))
+    _logger.debug("Distance mesuree : %d cm", distance)
+    return distance
+
+def _read_lines():
     """
     Lit et renvoie la liste des valeurs lues par les capteurs de ligne.
     """
-    return [1 if value == 1 else 0 for value in _line_follower.read_digital()]
+    raw_values = _line_follower.read_digital()
+    values = [1 if value == 1 else 0 for value in raw_values]
+    # -1 signifie que la lecture est ambigue (valeur analogique egale a la reference)
+    _logger.debug("Capteurs de ligne : brut=%s normalise=%s", raw_values, values)
+    return values
 
 
 def _read_sensors_values():

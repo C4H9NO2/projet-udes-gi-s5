@@ -12,6 +12,7 @@ voir `vitesse_m_s_par_unite_pwm` dans `config.json`), `direction` va de -1
 import asyncio
 import json
 import logging
+import os
 
 from websockets.exceptions import ConnectionClosed
 from websockets.server import serve
@@ -83,7 +84,10 @@ async def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.DEBUG if os.environ.get("PICAR_DEBUG") else logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+    )
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
