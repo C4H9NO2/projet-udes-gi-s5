@@ -41,7 +41,7 @@ def _read_lines():
     raw_values = _line_follower.read_digital()
     values = [1 if value == 1 else 0 for value in raw_values]
     # -1 signifie que la lecture est ambigue (valeur analogique egale a la reference)
-    _logger.debug("Capteurs de ligne : brut=%s normalise=%s", raw_values, values)
+    _logger.debug("Capteurs de ligne : brut=%s normalise=%s", [float(value) for value in raw_values], values)
     return values
 
 
