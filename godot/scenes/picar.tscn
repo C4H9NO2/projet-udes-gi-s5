@@ -99,7 +99,7 @@ collision_mask = 16
 script = ExtResource("2_fgegr")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.988523, 0.151071, 0, -0.151071, 0.988523, 0, 0.142312, 0.141071)
+transform = Transform3D(1, 0, 0, 0, 0.898212, 0.439563, 0, -0.439563, 0.898212, 0, 0.179978, 0.126901)
 current = true
 near = 0.001
 far = 2000.0
