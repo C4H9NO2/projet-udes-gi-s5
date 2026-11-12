@@ -33,8 +33,8 @@ Les deux dossiers du site de session sont regroupés dans un seul dépôt, `Doss
 
 - **Godot 4.4.1** (version standard, pas .NET) on utilise la même version pour pas avoir de problèmes de compatibilité
 - **Blender** si vous modifiez les modèles `.blend`, il faut mettre son path dans *Éditeur → Paramètres de l'éditeur → FileSystem → Import → Blender*
-- **Sur le Pi** (recréer le .venv sur le raspberry pi) : `cd picar && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt ./SunFounder_PiCar`
-- 
+- **Sur le Pi** (recréer le .venv sur le raspberry pi) : `cd picar && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt ./SunFounder_PiCar ./SunFounder_PiCar-S` puis `./.venv/bin/python main.py` pour lancer le serveur WebSocket du PiCar 
+
 ## NB
 - (voir `godot/scripts/fsm/NetworkConnectingState.gd`) si jamais, Godot se connecte au serveur WebSocket sur le raspberry pi sur le port **8765** (so l'ordi doit être sur le même réseau que le pi)
 - Le dossier du site de session contenait un exécutable Godot 4.2.1 pour le Pi sauf que le projet est en **4.4**. Va falloir demander au prof quelle version utiliser quand on va faire rouler GoDot sur le raspberry pi

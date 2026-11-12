@@ -1,0 +1,23 @@
+# SunFounder ne publie pas ces pilotes sur pip, ce fichier les rend installables comme n'importe quel autres paquets :
+#
+#     pip install ./SunFounder_PiCar ./SunFounder_PiCar-S
+#
+# ce qui permet à `main.py` d'écrire simplement :
+#
+#     from SunFounder_Line_Follower import Line_Follower
+#     from ultrasonic_module import Ultrasonic_Avoidance
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SunFounder_PiCar-S"
+version = "1.0.0"
+description = "Pilotes des capteurs SunFounder PiCar-S (capteur de ligne, ultrasons)"
+requires-python = ">=3.7"
+
+[tool.setuptools]
+package-dir = { "" = "example" }
+packages = ["SunFounder_Line_Follower"]
+py-modules = ["ultrasonic_module"]
