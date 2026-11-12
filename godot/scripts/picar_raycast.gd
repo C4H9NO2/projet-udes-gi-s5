@@ -29,6 +29,8 @@ var distance_arret = 0.0
 var accel_max = 0.0
 var temps_pause_bille = 0.0
 var direction_contournerment = 0.0
+var angle_braquage_max_deg = 45.0
+var steer_speed_normalise = 4.0
 var trim_direction_deg = 0.0
 var trim_direction_normalise = 0.0
 
@@ -56,8 +58,10 @@ func _ready():
 	distance_arret = Config.donnees.get("distance_arret")
 	temps_pause_bille = Config.donnees.get("temps_pause_bille")
 	direction_contournerment = Config.donnees.get("direction_contournerment")
+	angle_braquage_max_deg = Config.donnees.get("angle_braquage_max_deg", 45.0)
+	steer_speed_normalise = Config.donnees.get("steer_speed_deg_per_s", 180.0) / maxf(angle_braquage_max_deg, 0.001)
 	trim_direction_deg = Config.donnees.get("trim_direction_deg", 0.0)
-	trim_direction_normalise = trim_direction_deg / maxf(Config.donnees.get("angle_braquage_max_deg", 45.0), 0.001)
+	trim_direction_normalise = trim_direction_deg / maxf(angle_braquage_max_deg, 0.001)
 	
 	_recuperer_roues()
 
@@ -123,7 +127,6 @@ const LINE_FILTER = 18.0	# fréquence de coupure du filtre de position (rad/s)
 const RATE_FILTER = 10.0	# fréquence de coupure du filtre de dérivée de la position (rad/s)
 const STEER_P_GAIN = 0.5	# braquage par unité de position (0.5 = ancien mapping capteur 1)
 const STEER_D_GAIN = 0.010	# amortissement (unités de braquage par unité de dérivée de la position/s)
-const STEER_RATE = 4.0		# vitesse de variation du braquage (normalisé/s)
 const CURVE_ACCEL = 0.024	# accélération latérale conservée pour la bille (m/s²)
 
 # Constantes du contournement d'obstacle
@@ -181,7 +184,7 @@ func line_follower_car_angle(delta):
 	derivee_filtree = lerp(derivee_filtree, taux, 1.0 - exp(-RATE_FILTER * delta))
 
 	# Braquage proportionnel à l'écart latéral, amorti par sa dérivée (PD)
-	var angle_max: float = deg_to_rad(float(Config.donnees.get("angle_braquage_max_deg", 45.0)))
+	var angle_max: float = deg_to_rad(angle_braquage_max_deg)
 	var steer_target: float = STEER_P_GAIN * position_filtree + STEER_D_GAIN * derivee_filtree
 	steer_target = clampf(steer_target, -1.0, 1.0)
 
@@ -200,7 +203,7 @@ func line_follower_car_angle(delta):
 		vitesse_cible = 0.0
 
 	# Braquage progressif (le servo ne tourne pas instantanément)
-	steer_dir = move_toward(steer_dir, steer_target, STEER_RATE * delta)
+	steer_dir = move_toward(steer_dir, steer_target, steer_speed_normalise * delta)
 
 	# Accélération longitudinale limitée par le budget total d'accélération
 	var accel_lateral: float = vitesse * vitesse * courbure
@@ -344,7 +347,7 @@ func deplacer(delta: float) -> void:
 	var v_cible = vitesse
 
 	# angle de braquage demandé
-	var angle_cible = steer_dir * cfg.get("angle_braquage_max_deg", 45.0)
+	var angle_cible = steer_dir * angle_braquage_max_deg
 
 	# mode test
 	if mode_test_acceleration and not manual_control_enabled:

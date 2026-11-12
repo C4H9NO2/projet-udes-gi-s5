@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
 Protocole de communication :
-    Godot -> Python (~20 Hz) : {"velocity": 0.0-0.2, "direction": -1.0-1.0}
+    Godot -> Python (frequence configurable via `frequence_envoi_commande_hz`
+    dans `godot/config.json`, 50 Hz par defaut) :
+        {"velocity": -1.0-1.0, "direction": -1.0-1.0}
     PiCar -> Godot          : {"distance": <cm>, "line_follower": [0|1, 0|1, 0|1, 0|1, 0|1]}
 
-`velocity` est une consigne de vitesse normalisee (0.2 correspond a 20 % de PWM,
-voir `vitesse_m_s_par_unite_pwm` dans `config.json`), `direction` va de -1
-(droite) a 1 (gauche).
+`velocity` est une consigne de vitesse normalisee (1.0 correspond a 100 % de PWM ;
+le lien avec les m/s est donne par `vitesse_m_s_par_unite_pwm` dans
+`godot/config.json`), `direction` va de -1 (droite) a 1 (gauche).
 """
 
 import asyncio

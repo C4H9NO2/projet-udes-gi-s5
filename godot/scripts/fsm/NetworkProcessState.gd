@@ -1,7 +1,8 @@
 class_name NetworkFSMProcessState
 extends StateMachineState
 
-var test = 0
+var test = 0.0
+var periode_envoi = 0.02
 
 func _input(event):
 	pass
@@ -9,6 +10,7 @@ func _input(event):
 # Called when the state machine enters this state.
 func on_enter() -> void:
 	print("Network Process State entered")
+	periode_envoi = 1.0 / maxf(Config.donnees.get("frequence_envoi_commande_hz", 50.0), 0.001)
 	#get_parent().socket.send_text("Hello mom!")
 
 
@@ -25,14 +27,13 @@ func on_process(delta: float) -> void:
 			if get_parent().data_received == null:
 				print("Error while parsing received string")
 
-		# Send current data to send JSON packet every 50ms ish
-		if test > 0.05:
+		# Send current data to send JSON packet at the configured rate
+		test += delta
+		if test >= periode_envoi:
+			test = fmod(test, periode_envoi)
 			var json_data = JSON.stringify(get_parent().data_to_send).to_utf8_buffer()
 			#print(json_data)
 			get_parent().socket.send(json_data)
-			test = 0
-		else:
-			test += delta
 	elif state == WebSocketPeer.STATE_CLOSING || WebSocketPeer.STATE_CLOSING:
 		get_parent().current_state = $"../NetworkDisconnectingState"
 
