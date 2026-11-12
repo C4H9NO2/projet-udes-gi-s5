@@ -24,6 +24,7 @@ var temps_pause_bille_cal = 0.0
 var vitesse_max = 0.0
 var vitesse_moyenne = 0.0
 var vitesse_faible = 0.0
+var vitesse_m_s_par_unite_pwm = 0.0
 var distance_arret = 0.0
 var accel_max = 0.0
 var temps_pause_bille = 0.0
@@ -48,6 +49,7 @@ func _ready():
 	vitesse_max = Config.donnees.get("vitesse_max_m_s")
 	vitesse_moyenne = Config.donnees.get("vitesse_moyenne_m_s")
 	vitesse_faible = Config.donnees.get("vitesse_faible_m_s")
+	vitesse_m_s_par_unite_pwm = Config.donnees.get("vitesse_m_s_par_unite_pwm", 0.68)
 	accel_max = Config.donnees.get("acceleration_max_m_s2")
 	distance_arret = Config.donnees.get("distance_arret")
 	temps_pause_bille = Config.donnees.get("temps_pause_bille")
@@ -72,7 +74,7 @@ func _process(delta):
 			nfsm.data_to_send["velocity"] = manual_velocity
 			nfsm.data_to_send["direction"] = manual_direction
 		else:
-			nfsm.data_to_send["velocity"] = vitesse * 4
+			nfsm.data_to_send["velocity"] = vitesse / maxf(vitesse_m_s_par_unite_pwm, 0.001)
 			nfsm.data_to_send["direction"] = steer_dir
 		
 		lfs_simulated_ignored = true

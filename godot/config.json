@@ -4,6 +4,7 @@
 	"vitesse_max_m_s": 0.075,
   	"vitesse_moyenne_m_s": 0.065,
   	"vitesse_faible_m_s": 0.055,
+	"vitesse_m_s_par_unite_pwm": 0.5769230769,
   
 	"angle_braquage_max_deg": 45,
 	
