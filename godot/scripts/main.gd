@@ -1,12 +1,12 @@
 extends Node3D
 
 # Variables
-var NetworkIPAddrRegex = RegEx.new()
+var HostRegex = RegEx.new()
 
 # Engine functions
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	NetworkIPAddrRegex.compile(r'^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$')
+	HostRegex.compile(r'^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])$')
 	#get_node("NetworkFSM").current_state = $NetworkFSM/NetworkInitState
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -22,14 +22,15 @@ func _on_connect_pressed():
 	if get_node("GridContainer/btn_Connect").text == "Disconnect":
 		$NetworkFSM.current_state = $NetworkFSM/NetworkClosingConnectionState
 	else:
-		var RegexResult = NetworkIPAddrRegex.search_all(get_node("GridContainer/le_IpAdress").text)
-		if RegexResult.size() > 0:
+		var adresse = get_node("GridContainer/le_IpAdress").text.strip_edges()
+		if HostRegex.search(adresse) != null:
+			get_node("GridContainer/le_IpAdress").text = adresse
 			# Disable button before having a connection
 			get_node("GridContainer/btn_Connect").disabled = true
 			get_node("GridContainer/lb_ConnectionStatusPackets").text = "Connecting"
 			get_node("NetworkFSM").current_state = $NetworkFSM/NetworkInitState
 		else:
-			get_node("AspectRatioContainer/GridContainer/lb_ConnectionStatusPackets").text = "Wrong IP Address!"
+			get_node("GridContainer/lb_ConnectionStatusPackets").text = "Wrong IP address or hostname!"
 
 
 func _on_camera_toggle_toggled(toggled_on):
