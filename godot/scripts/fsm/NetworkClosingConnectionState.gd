@@ -6,8 +6,8 @@ extends StateMachineState
 func on_enter() -> void:
 	print("Network Closing connection State entered")
 	get_parent().socket.close(1000, "Connection was closed by the user")
-	get_node("../../AspectRatioContainer/GridContainer/btn_Connect").text = "Connect"
-	get_node("../../AspectRatioContainer/GridContainer/lb_ConnectionStatusPackets").text = "Disconnected"
+	get_node("../../GridContainer/btn_Connect").text = "Connect"
+	get_node("../../GridContainer/lb_ConnectionStatusPackets").text = "Disconnected"
 	get_parent().current_state = $"../NetworkWaitingState"
 
 
