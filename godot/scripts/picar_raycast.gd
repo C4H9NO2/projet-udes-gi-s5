@@ -8,6 +8,10 @@ enum WallState {
 }
 var vitesse = 0.0
 
+var manual_control_enabled := false
+var manual_velocity := 0.0
+var manual_direction := 0.0
+
 #Capteur de distance
 var ray = null
 var ray_collision_point = Vector3.ZERO
@@ -54,34 +58,58 @@ func _ready():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	if wall_state == WallState.IDLE:
+	if manual_control_enabled:
+		wall_state = WallState.IDLE
+		_update_manual_control()
+	elif wall_state == WallState.IDLE:
 		line_follower_car_angle(delta)
 	else:
 		wall_avoidance_manager(delta)
 	# If websocket connection
 	if nfsm.current_state == $"../NetworkFSM/NetworkProcessState" :
 		#print(nfsm.data_received['line_follower'])
-		nfsm.data_to_send["velocity"] = vitesse * 4
-		nfsm.data_to_send["direction"] = steer_dir
+		if manual_control_enabled:
+			nfsm.data_to_send["velocity"] = manual_velocity
+			nfsm.data_to_send["direction"] = manual_direction
+		else:
+			nfsm.data_to_send["velocity"] = vitesse * 4
+			nfsm.data_to_send["direction"] = steer_dir
 		
 		lfs_simulated_ignored = true
 	else:
 		
 		lfs_simulated_ignored = false
 
+func _update_manual_control():
+	manual_direction = 0.0
+	if Input.is_key_pressed(KEY_LEFT):
+		manual_direction += 1.0
+	if Input.is_key_pressed(KEY_RIGHT):
+		manual_direction -= 1.0
+
+	manual_velocity = 0.0
+	if Input.is_key_pressed(KEY_UP):
+		manual_velocity += 1.0
+	if Input.is_key_pressed(KEY_DOWN):
+		manual_velocity -= 1.0
+
+	steer_dir = manual_direction
+	vitesse = manual_velocity * vitesse_max
+
 func _physics_process(delta):
 	#pass
 # Ray casting for distance
 	if !nfsm.current_state == $"../NetworkFSM/NetworkProcessState" :
-		if ray.is_colliding():
-			ray_collision_point = ray.get_collision_point()
-			distance = ray_collision_point.distance_to(ray.global_position)
-			#print(ray_collision_point)
-			print(distance)
-			if distance < distance_arret * 2.0 and wall_state == WallState.IDLE:
-				wall_state = WallState.SLOW_DOWN #Premier état du contournement
-		else:
-			pass
+		if not manual_control_enabled:
+			if ray.is_colliding():
+				ray_collision_point = ray.get_collision_point()
+				distance = ray_collision_point.distance_to(ray.global_position)
+				#print(ray_collision_point)
+				print(distance)
+				if distance < distance_arret * 2.0 and wall_state == WallState.IDLE:
+					wall_state = WallState.SLOW_DOWN #Premier état du contournement
+			else:
+				pass
 		deplacer(delta)
 
 # Suivi de ligne continu
@@ -301,7 +329,7 @@ func _recuperer_roues() -> void:
 func deplacer(delta: float) -> void:
 	temps_ecoule += delta
 	
-	if temps_ecoule < delai_depart_s:
+	if temps_ecoule < delai_depart_s and not manual_control_enabled:
 		return
 
 	var cfg = Config.donnees
@@ -313,25 +341,29 @@ func deplacer(delta: float) -> void:
 	var angle_cible = steer_dir * cfg.get("angle_braquage_max_deg", 45.0)
 
 	# mode test
-	if mode_test_acceleration:
+	if mode_test_acceleration and not manual_control_enabled:
 		angle_cible = 0.0
 		v_cible = vitesse_test_m_s if temps_ecoule < delai_depart_s + duree_test_s else 0.0
 
 	# accélération / décélération
 	var a_max = cfg.get("acceleration_max_m_s2", 0.72)
 
-	vitesse_actuelle = move_toward(
-		vitesse_actuelle,
-		v_cible,
-		a_max * delta
-	)
+	if manual_control_enabled:
+		vitesse_actuelle = v_cible
+		angle_actuel = angle_cible
+	else:
+		vitesse_actuelle = move_toward(
+			vitesse_actuelle,
+			v_cible,
+			a_max * delta
+		)
 
-	# vitesse de braquage
-	angle_actuel = move_toward(
-		angle_actuel,
-		angle_cible,
-		cfg.get("vitesse_braquage_deg_s", 200.0) * delta
-	)
+		# vitesse de braquage
+		angle_actuel = move_toward(
+			angle_actuel,
+			angle_cible,
+			cfg.get("vitesse_braquage_deg_s", 200.0) * delta
+		)
 
 	# modèle bicycle
 	var omega = vitesse_actuelle / EMPATTEMENT * tan(deg_to_rad(angle_actuel))

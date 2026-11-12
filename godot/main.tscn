@@ -102,6 +102,10 @@ text = "Connect"
 layout_mode = 2
 text = "Quit"
 
+[node name="cb_ManualControl" type="CheckBox" parent="GridContainer"]
+layout_mode = 2
+text = "Control car with arrow keys"
+
 [node name="Toggle Caméra libre" type="CheckBox" parent="."]
 anchors_preset = 1
 anchor_left = 1.0
@@ -161,6 +165,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.654709, 0.102886, -0.419294
 [connection signal="toggled" from="GridContainer/CheckBox" to="." method="_on_check_box_toggled"]
 [connection signal="pressed" from="GridContainer/btn_Connect" to="." method="_on_connect_pressed"]
 [connection signal="pressed" from="GridContainer/btn_Quit" to="." method="_on_quit_pressed"]
+[connection signal="toggled" from="GridContainer/cb_ManualControl" to="." method="_on_manual_control_toggled"]
 [connection signal="toggled" from="Toggle Caméra libre" to="." method="_on_camera_toggle_toggled"]
 
 [editable path="parcours"]
