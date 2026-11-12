@@ -61,7 +61,7 @@ func _process(delta):
 	# If websocket connection
 	if nfsm.current_state == $"../NetworkFSM/NetworkProcessState" :
 		#print(nfsm.data_received['line_follower'])
-		nfsm.data_to_send["velocity"] = vitesse
+		nfsm.data_to_send["velocity"] = vitesse * 4
 		nfsm.data_to_send["direction"] = steer_dir
 		
 		lfs_simulated_ignored = true
@@ -84,14 +84,27 @@ func _physics_process(delta):
 			pass
 		deplacer(delta)
 
-var vitesse_cible = 0.0
-const turn_angle_mid = 0.5
+# Suivi de ligne continu
+const LINE_FILTER = 18.0	# fréquence de coupure du filtre de position (rad/s)
+const RATE_FILTER = 10.0	# fréquence de coupure du filtre de dérivée de la position (rad/s)
+const STEER_P_GAIN = 0.5	# braquage par unité de position (0.5 = ancien mapping capteur 1)
+const STEER_D_GAIN = 0.010	# amortissement (unités de braquage par unité de dérivée de la position/s)
+const STEER_RATE = 4.0		# vitesse de variation du braquage (normalisé/s)
+const CURVE_ACCEL = 0.024	# accélération latérale conservée pour la bille (m/s²)
+
+# Constantes du contournement d'obstacle
 const turn_angle_big = 1
 const turn_accel = 1
-var dir_buf = []
-func line_follower_car_angle(delta):
-	var steer_target := 0.0
 
+var position_filtree := 0.0						# position de la ligne (+2 à -2) lissée par un filtre passe-bas
+var derniere_position_filtree := 0.0			# utile pour calculer la dérivée
+var derivee_filtree := 0.0						# dérivée filtrée de la position
+var derniere_position_mesuree := 0.0			# utile pour savoir de quel côté la ligne était avant d'être perdue
+var temps_derniere_position_mesuree := 0.0		# utile pour savoir depuis combien de temps la ligne est perdue
+
+var vitesse_cible = 0.0
+
+func line_follower_car_angle(delta):
 	var sensors
 
 	if lfs_simulated_ignored:
@@ -99,45 +112,49 @@ func line_follower_car_angle(delta):
 	else:
 		sensors = lfs.line_follower_array
 
-	# Centre
-	if sensors[2]:
-		vitesse_cible = vitesse_max
-		steer_target = 0.0
+	# La position mesurée est va de -2 à 2 suivant le capteur actif.
+	# On prend le barycentre si plusieurs capteurs sont actifs en même temps :
+	var somme := 0.0
+	var nb_capteurs_actifs := 0
+	for i in 5:
+		if sensors[i]:
+			somme += 2 - i 
+			nb_capteurs_actifs += 1
 
-	# Léger gauche
-	elif sensors[1]:
-		vitesse_cible = vitesse_moyenne
-		steer_target = turn_angle_mid
+	var position_mesuree := 0.0
 
-	# Léger droite
-	elif sensors[3]:
-		vitesse_cible = vitesse_moyenne
-		steer_target = -turn_angle_mid
+	# Si on est sur la ligne, on calcule le barycentre
+	if nb_capteurs_actifs > 0:
+		position_mesuree = somme / nb_capteurs_actifs
+		derniere_position_mesuree = position_mesuree
+		temps_derniere_position_mesuree = 0.0
 
-	# Fort gauche
-	elif sensors[0]:
-		vitesse_cible = vitesse_faible
-		steer_target = turn_angle_big
-
-	# Fort droite
-	elif sensors[4]:
-		vitesse_cible = vitesse_faible
-		steer_target = -turn_angle_big
-
-	# Ligne perdue
+	# Si on a perdu la ligne, on considère qu'elle est du côté où elle était la dernière fois qu'on la vue, et on augmente progressivement l'écart pour simuler un écart de trajectoire.
 	else:
-		var mean = average(dir_buf)
+		temps_derniere_position_mesuree += delta
+		var signe := signf(derniere_position_mesuree)
+		if signe == 0.0:
+			signe = signf(steer_dir)
+		position_mesuree = signe * min(2.0 + temps_derniere_position_mesuree * 20.0, 4.0)
 
-		vitesse_cible = vitesse_faible
+	# Filtrage passe bas pour lisser les mesures
+	var alpha := 1.0 - exp(-LINE_FILTER * delta)
+	position_filtree = lerp(position_filtree, position_mesuree, alpha)
 
-		if mean > turn_angle_mid:
-			steer_target = turn_angle_big
-		elif mean >= 0:
-			steer_target = turn_angle_mid
-		elif mean < -turn_angle_mid:
-			steer_target = -turn_angle_big
-		else:
-			steer_target = -turn_angle_mid
+	# On calcule la dérivée filtrée, pour amortir les oscillations
+	var taux := (position_mesuree - derniere_position_filtree) / maxf(delta, 0.0001)
+	derniere_position_filtree = position_mesuree
+	derivee_filtree = lerp(derivee_filtree, taux, 1.0 - exp(-RATE_FILTER * delta))
+
+	# Braquage proportionnel à l'écart latéral, amorti par sa dérivée (PD)
+	var angle_max: float = deg_to_rad(float(Config.donnees.get("angle_braquage_max_deg", 45.0)))
+	var steer_target: float = STEER_P_GAIN * position_filtree + STEER_D_GAIN * derivee_filtree
+	steer_target = clampf(steer_target, -1.0, 1.0)
+
+	# On borne l'accélération latérale de la trajectoire demandée.
+	var courbure: float = absf(tan(steer_target * angle_max)) / EMPATTEMENT
+	var vitesse_courbe: float = sqrt(CURVE_ACCEL / maxf(courbure, 0.001))
+	vitesse_cible = clampf(vitesse_courbe, vitesse_faible, vitesse_max)
 
 	# Tous les capteurs actifs -> arrêt
 	if (lfs.line_follower_array[0] || nfsm.data_received['line_follower'][0]) \
@@ -148,25 +165,16 @@ func line_follower_car_angle(delta):
 
 		vitesse_cible = 0.0
 
-	# Braquage progressif
-	steer_dir = move_toward(
-		steer_dir,
-		steer_target,
-		turn_accel * delta
-	)
+	# Braquage progressif (le servo ne tourne pas instantanément)
+	steer_dir = move_toward(steer_dir, steer_target, STEER_RATE * delta)
 
-	# Vitesse progressive
-	vitesse = move_toward(
-		vitesse,
-		vitesse_cible,
-		accel_max * delta
-	)
-
-	# Historique des directions
-	if len(dir_buf) > 15:
-		dir_buf.pop_front()
-
-	dir_buf.append(steer_dir)
+	# Accélération longitudinale limitée par le budget total d'accélération
+	var accel_lateral: float = vitesse * vitesse * courbure
+	var accel_longitudinale: float = sqrt(maxf(accel_max * accel_max - accel_lateral * accel_lateral, 0.0))
+	# On garde toujours une marge pour ralentir si la courbe est plus vive que prévu.
+	if vitesse_cible < vitesse:
+		accel_longitudinale = maxf(accel_longitudinale, accel_max * 0.5)
+	vitesse = move_toward(vitesse, vitesse_cible, accel_longitudinale * delta)
 
 func wall_avoidance_manager(delta):
 
@@ -253,12 +261,6 @@ func wall_avoidance_loop(delta):
 	)
 
 	temp_time += delta
-
-func average(numbers: Array) -> float:
-	var sum := 0.0
-	for n in numbers:
-		sum += n
-	return sum / numbers.size()
 
 #simulation deplacement de la voiture
 #Transforme speed (0 a 1) et steer_dir (-1 a 1) du code des profs

@@ -2,8 +2,8 @@
 	"acceleration_max_m_s2": 0.065,
   
 	"vitesse_max_m_s": 0.075,
-  	"vitesse_moyenne_m_s": 0.055,
-  	"vitesse_faible_m_s": 0.035,
+  	"vitesse_moyenne_m_s": 0.065,
+  	"vitesse_faible_m_s": 0.055,
   
 	"angle_braquage_max_deg": 45,
 	

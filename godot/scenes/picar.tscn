@@ -23,7 +23,7 @@ size = Vector3(0.08, 0.03, 0.19)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l7qtk"]
 albedo_texture = ExtResource("7_y562d")
-roughness = 0.09
+roughness = 0.16
 rim_tint = 0.37
 uv1_scale = Vector3(-0.04, -0.04, -0.04)
 uv1_triplanar = true
