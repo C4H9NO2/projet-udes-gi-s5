@@ -5,33 +5,34 @@ import RPi.GPIO as GPIO
 
 
 class Ultrasonic_Avoidance(object):
-    timeout = 0.05
+    timeout = 0.03
 
-    def __init__(self, channel=20):
-        self.channel = channel
+    def __init__(self, trigger=16, echo=12):
+        self.trigger = trigger
+        self.echo = echo
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
+        GPIO.setup(self.trigger, GPIO.OUT)
+        GPIO.setup(self.echo, GPIO.IN)
 
     def distance(self):
-        GPIO.setup(self.channel, GPIO.OUT)
-        GPIO.output(self.channel, GPIO.LOW)
+        GPIO.output(self.trigger, GPIO.LOW)
         time.sleep(0.01)
-        GPIO.output(self.channel, GPIO.HIGH)
+        GPIO.output(self.trigger, GPIO.HIGH)
         time.sleep(0.00001)
-        GPIO.output(self.channel, GPIO.LOW)
-        GPIO.setup(self.channel, GPIO.IN)
+        GPIO.output(self.trigger, GPIO.LOW)
 
         timeout_start = time.monotonic()
         pulse_start = timeout_start
 
-        while GPIO.input(self.channel) == 0:
+        while GPIO.input(self.echo) == 0:
             pulse_start = time.monotonic()
             if pulse_start - timeout_start > self.timeout:
                 return -1
 
         pulse_end = pulse_start
 
-        while GPIO.input(self.channel) == 1:
+        while GPIO.input(self.echo) == 1:
             pulse_end = time.monotonic()
             if pulse_end - timeout_start > self.timeout:
                 return -1
@@ -53,7 +54,7 @@ class Ultrasonic_Avoidance(object):
 
 
 def test():
-    sensor = Ultrasonic_Avoidance(20)
+    sensor = Ultrasonic_Avoidance(16, 12)
     while True:
         print(f"distance : {sensor.distance()} cm")
         time.sleep(0.2)
