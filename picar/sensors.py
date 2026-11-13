@@ -9,8 +9,8 @@ from hardware_lock import hardware_lock
 _LINE_REFERENCES = [50, 50, 50, 50, 50]  # a recalibrer selon la surface
 _SENSOR_PERIOD_S = 0.05 # temps entre deux lectures de capteurs, en secondes
 
-_ULTRASON_TRIG = 16  # B16 (jaune)
-_ULTRASON_ECHO = 12  # B12 (bleu)
+_ULTRASON_TRIG = 12  # B12 (bleu)
+_ULTRASON_ECHO = 16  # B16 (jaune)
 
 _line_follower = Line_Follower.Line_Follower(references=_LINE_REFERENCES)
 _ultrasonic = Ultrasonic_Avoidance(_ULTRASON_TRIG, _ULTRASON_ECHO)
