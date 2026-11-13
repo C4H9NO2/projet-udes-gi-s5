@@ -3,14 +3,14 @@ import logging
 import json
 
 from SunFounder_Line_Follower import Line_Follower
-from ultrasonic_module import Ultrasonic_Avoidance
+from Ultrasonic_Avoidance import Ultrasonic_Avoidance
 from hardware_lock import hardware_lock
 
 _LINE_REFERENCES = [50, 50, 50, 50, 50]  # a recalibrer selon la surface
 _SENSOR_PERIOD_S = 0.05 # temps entre deux lectures de capteurs, en secondes
 
 _line_follower = Line_Follower.Line_Follower(references=_LINE_REFERENCES)
-_ultrasonic = Ultrasonic_Avoidance()
+_ultrasonic = Ultrasonic_Avoidance(20)
 _logger = logging.getLogger("picar")
 
 # Derniere lecture des capteurs, lue par le main
