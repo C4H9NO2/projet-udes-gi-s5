@@ -34,8 +34,8 @@ func on_process(delta: float) -> void:
 			var json_data = JSON.stringify(get_parent().data_to_send).to_utf8_buffer()
 			#print(json_data)
 			get_parent().socket.send(json_data)
-	elif state == WebSocketPeer.STATE_CLOSING || WebSocketPeer.STATE_CLOSING:
-		get_parent().current_state = $"../NetworkDisconnectingState"
+	elif state == WebSocketPeer.STATE_CLOSING || WebSocketPeer.STATE_CLOSED:
+		get_parent().current_state = $"../NetworkClosingConnectionState"
 
 
 # Called every physics frame when this state is active.

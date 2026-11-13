@@ -1,11 +1,10 @@
 class_name NetworkFSMInitState
 extends StateMachineState
 
-var socket = WebSocketPeer.new()
-
 # Called when the state machine enters this state.
 func on_enter() -> void:
 	print("Network Init State entered")
+	get_parent().socket = WebSocketPeer.new()
 	get_parent().current_state = $"../NetworkConnectingState"
 
 
