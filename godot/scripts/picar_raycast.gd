@@ -20,21 +20,6 @@ var distance = 0.0
 var temps_pause_bille_cal = 0.0
 
 
-#Constante du fichier config
-var vitesse_max = 0.0
-var vitesse_moyenne = 0.0
-var vitesse_faible = 0.0
-var vitesse_m_s_par_unite_pwm = 0.0
-var distance_arret = 0.0
-var accel_max = 0.0
-var temps_pause_bille = 0.0
-var direction_contournerment = 0.0
-var angle_braquage_max_deg = 45.0
-var steer_speed_normalise = 4.0
-var trim_direction_deg = 0.0
-var trim_direction_normalise = 0.0
-
-
 # How quickly the car turns
 
 var lfs = 0
@@ -48,20 +33,6 @@ func _ready():
 	ray = get_node("capteur_ultrasons")
 	lfs = $capteur_ligne
 	nfsm = $"../NetworkFSM"
-	
-	#Constante lu dans le fichier config
-	vitesse_max = Config.donnees.get("vitesse_max_m_s")
-	vitesse_moyenne = Config.donnees.get("vitesse_moyenne_m_s")
-	vitesse_faible = Config.donnees.get("vitesse_faible_m_s")
-	vitesse_m_s_par_unite_pwm = Config.donnees.get("vitesse_m_s_par_unite_pwm", 0.68)
-	accel_max = Config.donnees.get("acceleration_max_m_s2")
-	distance_arret = Config.donnees.get("distance_arret")
-	temps_pause_bille = Config.donnees.get("temps_pause_bille")
-	direction_contournerment = Config.donnees.get("direction_contournerment")
-	angle_braquage_max_deg = Config.donnees.get("angle_braquage_max_deg", 45.0)
-	steer_speed_normalise = Config.donnees.get("steer_speed_deg_per_s", 180.0) / maxf(angle_braquage_max_deg, 0.001)
-	trim_direction_deg = Config.donnees.get("trim_direction_deg", 0.0)
-	trim_direction_normalise = trim_direction_deg / maxf(angle_braquage_max_deg, 0.001)
 	
 	_recuperer_roues()
 
@@ -80,10 +51,10 @@ func _process(delta):
 		#print(nfsm.data_received['line_follower'])
 		if manual_control_enabled:
 			nfsm.data_to_send["velocity"] = manual_velocity
-			nfsm.data_to_send["direction"] = clampf(manual_direction + trim_direction_normalise, -1.0, 1.0)
+			nfsm.data_to_send["direction"] = clampf(manual_direction + Config.trim_direction_normalise, -1.0, 1.0)
 		else:
-			nfsm.data_to_send["velocity"] = vitesse / maxf(vitesse_m_s_par_unite_pwm, 0.001)
-			nfsm.data_to_send["direction"] = clampf(steer_dir + trim_direction_normalise, -1.0, 1.0)
+			nfsm.data_to_send["velocity"] = vitesse / maxf(Config.vitesse_m_s_par_unite_pwm, 0.001)
+			nfsm.data_to_send["direction"] = clampf(steer_dir + Config.trim_direction_normalise, -1.0, 1.0)
 		
 		lfs_simulated_ignored = true
 	else:
@@ -104,7 +75,7 @@ func _update_manual_control():
 		manual_velocity -= 1.0
 
 	steer_dir = manual_direction
-	vitesse = manual_velocity * vitesse_max
+	vitesse = manual_velocity * Config.vitesse_max
 
 func _physics_process(delta):
 	#pass
@@ -116,7 +87,7 @@ func _physics_process(delta):
 				distance = ray_collision_point.distance_to(ray.global_position)
 				#print(ray_collision_point)
 				print(distance)
-				if distance < distance_arret * 2.0 and wall_state == WallState.IDLE:
+				if distance < Config.distance_arret * 2.0 and wall_state == WallState.IDLE:
 					wall_state = WallState.SLOW_DOWN #Premier état du contournement
 			else:
 				pass
@@ -184,14 +155,14 @@ func line_follower_car_angle(delta):
 	derivee_filtree = lerp(derivee_filtree, taux, 1.0 - exp(-RATE_FILTER * delta))
 
 	# Braquage proportionnel à l'écart latéral, amorti par sa dérivée (PD)
-	var angle_max: float = deg_to_rad(angle_braquage_max_deg)
+	var angle_max: float = deg_to_rad(Config.angle_braquage_max_deg)
 	var steer_target: float = STEER_P_GAIN * position_filtree + STEER_D_GAIN * derivee_filtree
 	steer_target = clampf(steer_target, -1.0, 1.0)
 
 	# On borne l'accélération latérale de la trajectoire demandée.
 	var courbure: float = absf(tan(steer_target * angle_max)) / EMPATTEMENT
 	var vitesse_courbe: float = sqrt(CURVE_ACCEL / maxf(courbure, 0.001))
-	vitesse_cible = clampf(vitesse_courbe, vitesse_faible, vitesse_max)
+	vitesse_cible = clampf(vitesse_courbe, Config.vitesse_faible, Config.vitesse_max)
 
 	# Tous les capteurs actifs -> arrêt
 	if (lfs.line_follower_array[0] || nfsm.data_received['line_follower'][0]) \
@@ -203,14 +174,14 @@ func line_follower_car_angle(delta):
 		vitesse_cible = 0.0
 
 	# Braquage progressif (le servo ne tourne pas instantanément)
-	steer_dir = move_toward(steer_dir, steer_target, steer_speed_normalise * delta)
+	steer_dir = move_toward(steer_dir, steer_target, Config.steer_speed_normalise * delta)
 
 	# Accélération longitudinale limitée par le budget total d'accélération
 	var accel_lateral: float = vitesse * vitesse * courbure
-	var accel_longitudinale: float = sqrt(maxf(accel_max * accel_max - accel_lateral * accel_lateral, 0.0))
+	var accel_longitudinale: float = sqrt(maxf(Config.accel_max * Config.accel_max - accel_lateral * accel_lateral, 0.0))
 	# On garde toujours une marge pour ralentir si la courbe est plus vive que prévu.
 	if vitesse_cible < vitesse:
-		accel_longitudinale = maxf(accel_longitudinale, accel_max * 0.5)
+		accel_longitudinale = maxf(accel_longitudinale, Config.accel_max * 0.5)
 	vitesse = move_toward(vitesse, vitesse_cible, accel_longitudinale * delta)
 
 func wall_avoidance_manager(delta):
@@ -218,22 +189,22 @@ func wall_avoidance_manager(delta):
 	match wall_state:
 
 		WallState.SLOW_DOWN:
-			if distance > distance_arret * 1.5:
+			if distance > Config.distance_arret * 1.5:
 				vitesse = move_toward(
 					vitesse,
-					vitesse_moyenne,
-					accel_max * delta
+					Config.vitesse_moyenne,
+					Config.accel_max * delta
 				)
 				steer_dir = move_toward(
 					steer_dir,
 					0.0,
 					turn_accel * delta
 				)
-			elif distance > distance_arret:
+			elif distance > Config.distance_arret:
 				vitesse = move_toward(
 					vitesse,
-					vitesse_faible,
-					accel_max * delta
+					Config.vitesse_faible,
+					Config.accel_max * delta
 				)
 				steer_dir = move_toward(
 					steer_dir,
@@ -244,7 +215,7 @@ func wall_avoidance_manager(delta):
 				vitesse = move_toward(
 					vitesse,
 					0.0,
-					accel_max * delta
+					Config.accel_max * delta
 				)
 				steer_dir = move_toward(
 					steer_dir,
@@ -259,7 +230,7 @@ func wall_avoidance_manager(delta):
 			vitesse = 0.0
 			steer_dir = 0.0
 			temps_pause_bille_cal += delta
-			if temps_pause_bille_cal >= temps_pause_bille:
+			if temps_pause_bille_cal >= Config.temps_pause_bille:
 				temp_time = 0.0
 				wall_state = WallState.AVOID
 
@@ -273,13 +244,13 @@ func wall_avoidance_loop(delta):
 	var steer_target = 0.0
 	
 	if temp_time < 5.5:
-		steer_target = -turn_angle_big * direction_contournerment
+		steer_target = -turn_angle_big * Config.direction_contournerment
 
 	elif temp_time < 16:
-		steer_target = turn_angle_big * direction_contournerment
+		steer_target = turn_angle_big * Config.direction_contournerment
 
 	elif temp_time < 17.5:
-		steer_target = -turn_angle_big * direction_contournerment
+		steer_target = -turn_angle_big * Config.direction_contournerment
 	
 	else:
 		temp_time = 0.0
@@ -293,15 +264,15 @@ func wall_avoidance_loop(delta):
 	)
 	vitesse = move_toward(
 		vitesse,
-		vitesse_faible,
-		(accel_max/2) * delta
+		Config.vitesse_faible,
+		(Config.accel_max/2) * delta
 	)
 
 	temp_time += delta
 
 #simulation deplacement de la voiture
 #Transforme speed (0 a 1) et steer_dir (-1 a 1) du code des profs
-#en vitesse (m/s) et angle de roues, avec les limites du config.json.
+#en vitesse (m/s) et angle de roues, avec les limites du config.jsonc.
 const EMPATTEMENT = 0.142	#distance entre les essieux (m) (picar.blend)
 const RAYON_ROUE = 0.0325	#rayon des roues (m) (picar.blend)
 const VOIE = 0.11	# distance entre les centres des roues gauche/droite (m)
@@ -341,13 +312,11 @@ func deplacer(delta: float) -> void:
 	if temps_ecoule < delai_depart_s and not manual_control_enabled:
 		return
 
-	var cfg = Config.donnees
-
 	# vitesse demandée directement en m/s
 	var v_cible = vitesse
 
 	# angle de braquage demandé
-	var angle_cible = steer_dir * angle_braquage_max_deg
+	var angle_cible = steer_dir * Config.angle_braquage_max_deg
 
 	# mode test
 	if mode_test_acceleration and not manual_control_enabled:
@@ -355,8 +324,6 @@ func deplacer(delta: float) -> void:
 		v_cible = vitesse_test_m_s if temps_ecoule < delai_depart_s + duree_test_s else 0.0
 
 	# accélération / décélération
-	var a_max = cfg.get("acceleration_max_m_s2", 0.72)
-
 	if manual_control_enabled:
 		vitesse_actuelle = v_cible
 		angle_actuel = angle_cible
@@ -364,14 +331,14 @@ func deplacer(delta: float) -> void:
 		vitesse_actuelle = move_toward(
 			vitesse_actuelle,
 			v_cible,
-			a_max * delta
+			Config.accel_max * delta
 		)
 
 		# vitesse de braquage
 		angle_actuel = move_toward(
 			angle_actuel,
 			angle_cible,
-			cfg.get("vitesse_braquage_deg_s", 200.0) * delta
+			Config.vitesse_braquage_deg_s * delta
 		)
 
 	# modèle bicycle

@@ -10,7 +10,7 @@ func _input(event):
 # Called when the state machine enters this state.
 func on_enter() -> void:
 	print("Network Process State entered")
-	periode_envoi = 1.0 / maxf(Config.donnees.get("frequence_envoi_commande_hz", 50.0), 0.001)
+	periode_envoi = 1.0 / maxf(Config.frequence_envoi_commande_hz, 0.001)
 	#get_parent().socket.send_text("Hello mom!")
 
 
