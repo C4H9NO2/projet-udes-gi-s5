@@ -12,7 +12,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_temps = 0.0
 	if is_colliding():
-		var d := global_position.distance_to(get_collision_point())
+		var d := global_position.distance_to(get_collision_point()) / 10
 		distance_cm = d * 100.0 + randfn(0.0, ecart_type_cm)
 	else:
 		distance_cm = -1.0
