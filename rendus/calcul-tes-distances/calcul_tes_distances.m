@@ -6,8 +6,8 @@ if ~exist(dossier_figures, 'dir')
     mkdir(dossier_figures);
 end
 
-distances_reelles = [1 2 3]; % mesurées à la règle (cm)
-distances_mesurees = [1 2 3]; % mesurées par le capteur (cm)
+distances_reelles = [120 115 110 105 100 95 90 85 80 75 70 65 60 55 50 45 40 35 30 25 20 15 10 5 0]; % mesurées à la règle (cm)
+distances_mesurees = [122 117.5 112 107 102 98 92 87 82 78 73 68 63 58 53 48 43 37 33 28 23 18 13 9 4] ; % mesurées par le capteur (cm)
 
 % x = distance de reference (regle), y = lecture du capteur
 x = distances_reelles(:);
