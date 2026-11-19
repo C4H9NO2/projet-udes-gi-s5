@@ -224,13 +224,13 @@ func wall_avoidance_loop(delta):
 	print("IN WALL AVOIDANCE LOOP")
 	var steer_target = 0.0
 	
-	if temp_time < 5.5:
+	if temp_time < 4.5:
 		steer_target = -TURN_ANGLE_BIG * Config.direction_contournerment
 
-	elif temp_time < 16:
+	elif temp_time < 13:
 		steer_target = TURN_ANGLE_BIG * Config.direction_contournerment
 
-	elif temp_time < 17.5:
+	elif temp_time < 15.5:
 		steer_target = -TURN_ANGLE_BIG * Config.direction_contournerment
 	
 	else:
