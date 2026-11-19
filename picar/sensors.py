@@ -33,7 +33,7 @@ def _read_distance():
         _logger.debug("Distance invalide lue par le capteur a ultrasons : %r", distance)
         return -1
 
-    distance = int(round(distance))
+    # distance = int(round(distance))
     _logger.debug("Distance mesuree : %d cm", distance)
     return distance
 
