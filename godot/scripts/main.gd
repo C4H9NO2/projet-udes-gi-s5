@@ -36,6 +36,10 @@ func _on_connect_pressed():
 func _on_manual_control_toggled(toggled_on):
 	$PiCar.manual_control_enabled = toggled_on
 
+func _on_cacher_graphiques_toggled(toggled_on):
+	for graphe in $Graphes.get_children():
+		graphe.visible = not toggled_on
+
 func _on_camera_toggle_toggled(toggled_on):
 	$PiCar/Camera3D.current = not toggled_on
 	$"Caméra libre".current = toggled_on

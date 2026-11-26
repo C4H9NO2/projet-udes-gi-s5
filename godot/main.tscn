@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://bk5l7umgip4v5"]
+[gd_scene load_steps=23 format=3 uid="uid://bk5l7umgip4v5"]
 
 [ext_resource type="Script" uid="uid://tq58jihq45r4" path="res://scripts/main.gd" id="1_eka3w"]
 [ext_resource type="Script" uid="uid://xfwg5cs2hgt0" path="res://addons/finite_state_machine/scripts/finite_state_machine.gd" id="2_wl1fq"]
@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://buwfg82ftv1bb" path="res://scenes/bille.tscn" id="9_efxa6"]
 [ext_resource type="Script" uid="uid://spoxxauegi68" path="res://scripts/camera_libre.gd" id="10_4c57u"]
 [ext_resource type="PackedScene" uid="uid://b6kvdu31usv5p" path="res://obstacle.tscn" id="11_efxa6"]
+[ext_resource type="Script" uid="uid://c4ssiuvdyly7b" path="res://scripts/graphes.gd" id="12_graphe"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jv41d"]
 sky_top_color = Color(0.635294, 0.756863, 0.901961, 1)
@@ -77,10 +78,16 @@ columns = 2
 
 [node name="CheckBox" type="CheckBox" parent="GridContainer"]
 layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 5
 text = "Localhost"
 
 [node name="lb_ConnectionStatusPackets" type="Label" parent="GridContainer"]
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
 text = "Disconnected"
 
 [node name="le_IpAdress" type="LineEdit" parent="GridContainer"]
@@ -103,17 +110,23 @@ text = "Quit"
 
 [node name="cb_ManualControl" type="CheckBox" parent="GridContainer"]
 layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 5
 text = "Control car with arrow keys"
 
 [node name="Toggle Caméra libre" type="CheckBox" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -180.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -90.0
 offset_top = 3.0
-offset_right = -3.0
+offset_right = 90.0
 offset_bottom = 34.0
-grow_horizontal = 0
+grow_horizontal = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 5
 text = "Caméra libre"
 
 [node name="parcours" parent="." instance=ExtResource("8_kek77")]
@@ -161,10 +174,71 @@ speed = 0.745
 [node name="obstacle2" parent="." instance=ExtResource("11_efxa6")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.654709, 0.102886, -0.419294)
 
+[node name="Graphes" type="CanvasLayer" parent="."]
+
+[node name="GrapheAcceleration" type="Control" parent="Graphes"]
+clip_contents = true
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -448.0
+offset_top = 42.0
+offset_right = -8.0
+offset_bottom = 262.0
+grow_horizontal = 0
+mouse_filter = 2
+script = ExtResource("12_graphe")
+
+[node name="GrapheVitesse" type="Control" parent="Graphes"]
+clip_contents = true
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -448.0
+offset_top = 270.0
+offset_right = -8.0
+offset_bottom = 490.0
+grow_horizontal = 0
+mouse_filter = 2
+script = ExtResource("12_graphe")
+type_graphe = 1
+
+[node name="GrapheVitesseVoiture" type="Control" parent="Graphes"]
+clip_contents = true
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -448.0
+offset_top = 498.0
+offset_right = -8.0
+offset_bottom = 718.0
+grow_horizontal = 0
+mouse_filter = 2
+script = ExtResource("12_graphe")
+type_graphe = 2
+
+[node name="cb_CacherGraphiques" type="CheckBox" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -215.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = 34.0
+grow_horizontal = 0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 5
+text = "Cacher les graphiques"
+
 [connection signal="toggled" from="GridContainer/CheckBox" to="." method="_on_check_box_toggled"]
 [connection signal="pressed" from="GridContainer/btn_Connect" to="." method="_on_connect_pressed"]
 [connection signal="pressed" from="GridContainer/btn_Quit" to="." method="_on_quit_pressed"]
 [connection signal="toggled" from="GridContainer/cb_ManualControl" to="." method="_on_manual_control_toggled"]
 [connection signal="toggled" from="Toggle Caméra libre" to="." method="_on_camera_toggle_toggled"]
+[connection signal="toggled" from="cb_CacherGraphiques" to="." method="_on_cacher_graphiques_toggled"]
 
 [editable path="parcours"]
