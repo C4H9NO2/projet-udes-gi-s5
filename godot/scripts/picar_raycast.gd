@@ -69,6 +69,7 @@ var y_contournement := 0.0		# odométrie : décalage vers le côté du contourne
 var angle_contournement := 0.0	# odométrie : angle vers le côté du contournement (rad)
 var y_cible := 0.0				# décalage latéral visé (m)
 var x_s := 0.0					# longueur du S (m)
+var x_obstacle := 0.0			# distance de l'essieu arrière au début du S jusqu'à la face avant de l'obstacle (m)
 var angle_s := 0.0				# angle maximal du S (rad)
 var braquage_s := 0.0			# angle de braquage du S (rad)
 var angle_retour := 0.0			# angle de retour vers la ligne (rad)
@@ -98,11 +99,24 @@ func _ready():
 		cote = -1.0
 
 	# Géométrie fixe du contournement : elle ne dépend que de la config.
-	# Décalage latéral : demi-largeur de l'obstacle + marge + demi-largeur réelle de la voiture.
-	y_cible = maxf(Config.largeur_obstacle * 0.5 + Config.marge_contournement + LARGEUR_VOITURE * 0.5, 0.01)
+	# Décalage latéral : demi-largeur de l'obstacle + marge latérale + demi-largeur réelle de la voiture.
+	y_cible = maxf(Config.largeur_obstacle * 0.5 + Config.marge_contournement_x + LARGEUR_VOITURE * 0.5, 0.01)
 
-	# Distance longitudinale disponible : de l'essieu arrière au début du S jusqu'à la face avant de l'obstacle.
-	x_s = maxf(Config.distance_arret + DISTANCE_CAPTEUR_ESSIEU + Config.distance_recul, 0.05)
+	# Distance totale entre l'essieu arrière au début du S et la face avant de l'obstacle.
+	x_obstacle = maxf(Config.distance_arret + DISTANCE_CAPTEUR_ESSIEU + Config.distance_recul, 0.05)
+
+	# Marge longitudinale : le S se termine avant l'obstacle ; le reste est parcouru tout droit.
+	var marge_y := maxf(Config.marge_contournement_y, 0.0)
+	x_s = maxf(x_obstacle - marge_y, 0.05)
+
+	# S'assure que le S reste réalisable avec le braquage maximal.
+	var rayon_min := EMPATTEMENT / maxf(tan(theta_max), 0.0001)
+	var x_s_min := sqrt(maxf(4.0 * y_cible * rayon_min - y_cible * y_cible, 0.0))
+	if y_cible > 4.0 * rayon_min:
+		push_warning("Décalage latéral de contournement impossible avec le braquage maximal.")
+	if x_s < x_s_min:
+		push_warning("Marge de contournement y trop grande : S raccourci à %.1f cm pour respecter le braquage maximal." % (x_s_min * 100.0))
+		x_s = x_s_min
 
 	# S formé de deux arcs de cercle tangents de même rayon.
 	# x_s = 2 R sin(angle_s) et y_cible = 2 R (1 - cos(angle_s)).
@@ -333,7 +347,9 @@ func _obstacle_turn_in(delta: float) -> Array:
 # Une fois parallèle à la piste, on avance tout droit le long de l'obstacle
 # jusqu'à ce que l'arrière de la voiture ait dépassé sa face arrière.
 func _obstacle_pass(delta: float) -> Array:
-	var x_passage: float = x_s + Config.profondeur_obstacle + DISTANCE_ARRIERE_ESSIEU
+	# On parcourt tout droit la marge longitudinale restante, puis la profondeur
+	# de l'obstacle et le porte-à-faux arrière.
+	var x_passage: float = x_obstacle + Config.profondeur_obstacle + DISTANCE_ARRIERE_ESSIEU
 	if x_contournement >= x_passage:
 		wall_state = WallState.OBSTACLE_RETURN
 		return [v_min, 0.0]

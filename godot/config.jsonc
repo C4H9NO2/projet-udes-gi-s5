@@ -19,7 +19,11 @@
 	"distance_recul_m": 0.20,
 	"largeur_obstacle_m": 0.20,
 	"profondeur_obstacle_m": 0.04,
-	"marge_contournement_m": 0.20,
+	// Marges de contournement d'obstacle.
+	// x = marge latérale sur le côté de l'obstacle
+	"marge_contournement_x_m": 0.20,
+	// y = marge longitudinale : plus elle est grande, plus le S est serré et se termine en avance par rapport à l'obstacle
+	"marge_contournement_y_m": 0.05,
 	"angle_retour_ligne_deg": 40.0,
 	"direction_contournerment": 1,
 

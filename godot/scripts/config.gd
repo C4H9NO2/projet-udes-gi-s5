@@ -12,7 +12,9 @@ var temps_pause_avant_recul := 1.0
 var distance_recul := 0.30
 var largeur_obstacle := 0.10
 var profondeur_obstacle := 0.10
-var marge_contournement := 0.05
+# Marges de contournement : x = latérale, y = longitudinale (raccourcit le S).
+var marge_contournement_x := 0.05
+var marge_contournement_y := 0.0
 var angle_retour_ligne_deg := 30.0
 var direction_contournerment := 1.0
 var angle_braquage_max_deg := 45.0
@@ -49,7 +51,8 @@ func _charger_valeurs() -> void:
 	distance_recul = float(donnees.get("distance_recul_m", distance_recul))
 	largeur_obstacle = float(donnees.get("largeur_obstacle_m", largeur_obstacle))
 	profondeur_obstacle = float(donnees.get("profondeur_obstacle_m", profondeur_obstacle))
-	marge_contournement = float(donnees.get("marge_contournement_m", marge_contournement))
+	marge_contournement_x = float(donnees.get("marge_contournement_x_m", donnees.get("marge_contournement_m", marge_contournement_x)))
+	marge_contournement_y = float(donnees.get("marge_contournement_y_m", marge_contournement_y))
 	angle_retour_ligne_deg = float(donnees.get("angle_retour_ligne_deg", angle_retour_ligne_deg))
 	direction_contournerment = float(donnees.get("direction_contournerment", direction_contournerment))
 
