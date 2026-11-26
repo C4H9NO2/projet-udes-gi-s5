@@ -2,11 +2,9 @@
 	// Temps avant que la voiture commence à bouger
 	"delai_depart_s": 2.0,
 
-	"acceleration_max_m_s2": 0.055,
+	"acceleration_max_m_s2": 0.30,
 	// v_max = `overspeed_ratio` * v_min (v_min étant la vitesse max permise par `acceleration_max_m_s2` et `angle_braquage_max_deg`
 	"overspeed_ratio": 1.10,
-  	"vitesse_moyenne_m_s": 0.15,
-  	"vitesse_faible_m_s": 0.15,
 	
 	// Vitesse max de la voiture IRL
 	"vitesse_m_s_par_unite_pwm": 0.5769230769,
@@ -14,9 +12,15 @@
 	// Correction de l'angle de braquage pour compenser le fait que la voiture ne va pas tout droit
 	"trim_direction_deg": -8.5,
 	
-	"distance_arret": 1.3,
+	// Contournement d'obstacle (distances en mètres)
+	"distance_arret": 0.20,
 	// Temps d'arrêt avant le recul pour laisser la bille se stabiliser
-	"temps_pause_avant_recul": 1.0,
+	"temps_pause_avant_recul": 0.5,
+	"distance_recul_m": 0.20,
+	"largeur_obstacle_m": 0.20,
+	"profondeur_obstacle_m": 0.04,
+	"marge_contournement_m": 0.20,
+	"angle_retour_ligne_deg": 40.0,
 	"direction_contournerment": 1,
 
 	"frequence_envoi_commande_hz": 50

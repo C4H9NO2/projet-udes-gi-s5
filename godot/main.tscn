@@ -115,6 +115,13 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_constants/outline_size = 5
 text = "Control car with arrow keys"
 
+[node name="cb_BypassContraintes" type="CheckBox" parent="GridContainer"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 5
+text = "Bypass contraintes"
+
 [node name="Toggle Caméra libre" type="CheckBox" parent="."]
 anchors_preset = 5
 anchor_left = 0.5
@@ -160,7 +167,7 @@ mesh = SubResource("BoxMesh_efxa6")
 surface_material_override/0 = SubResource("StandardMaterial3D_dg77c")
 
 [node name="PiCar" parent="." instance=ExtResource("8_4c57u")]
-transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -1.18866, 0, 1.00435)
+transform = Transform3D(0.999995, 0, 0.00322877, 0, 1, 0, -0.00322877, 0, 0.999995, 0.663364, 0, 0.290525)
 
 [node name="bille" parent="." instance=ExtResource("9_efxa6")]
 transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0.650448, 0.168115, 0.153065)
@@ -172,7 +179,7 @@ script = ExtResource("10_4c57u")
 speed = 0.745
 
 [node name="obstacle2" parent="." instance=ExtResource("11_efxa6")]
-transform = Transform3D(-0.999901, 0, -0.0140844, 0, 1, 0, 0.0140844, 0, -0.999901, 0.666577, 0.09519, -0.0437026)
+transform = Transform3D(-0.999814, 0, -0.0193021, 0, 1, 0, 0.0193021, 0, -0.999814, 0.656195, 0.102955, -0.311152)
 
 [node name="Graphes" type="CanvasLayer" parent="."]
 
@@ -238,6 +245,7 @@ text = "Cacher les graphiques"
 [connection signal="pressed" from="GridContainer/btn_Connect" to="." method="_on_connect_pressed"]
 [connection signal="pressed" from="GridContainer/btn_Quit" to="." method="_on_quit_pressed"]
 [connection signal="toggled" from="GridContainer/cb_ManualControl" to="." method="_on_manual_control_toggled"]
+[connection signal="toggled" from="GridContainer/cb_BypassContraintes" to="." method="_on_bypass_contraintes_toggled"]
 [connection signal="toggled" from="Toggle Caméra libre" to="." method="_on_camera_toggle_toggled"]
 [connection signal="toggled" from="cb_CacherGraphiques" to="." method="_on_cacher_graphiques_toggled"]
 

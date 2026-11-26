@@ -5,12 +5,15 @@ var donnees: Dictionary = {}
 # Valeurs lues dans config.jsonc
 var delai_depart_s := 3.0
 var overspeed_ratio := 1.1
-var vitesse_moyenne := 0.065
-var vitesse_faible := 0.055
 var vitesse_m_s_par_unite_pwm := 0.5769230769
 var accel_max := 0.065
-var distance_arret := 1.3
+var distance_arret := 0.13
 var temps_pause_avant_recul := 1.0
+var distance_recul := 0.30
+var largeur_obstacle := 0.10
+var profondeur_obstacle := 0.10
+var marge_contournement := 0.05
+var angle_retour_ligne_deg := 30.0
 var direction_contournerment := 1.0
 var angle_braquage_max_deg := 45.0
 var trim_direction_deg := -8.5
@@ -39,12 +42,15 @@ func charger() -> void:
 func _charger_valeurs() -> void:
 	delai_depart_s = float(donnees.get("delai_depart_s", delai_depart_s))
 	overspeed_ratio = float(donnees.get("overspeed_ratio", overspeed_ratio))
-	vitesse_moyenne = float(donnees.get("vitesse_moyenne_m_s", vitesse_moyenne))
-	vitesse_faible = float(donnees.get("vitesse_faible_m_s", vitesse_faible))
 	vitesse_m_s_par_unite_pwm = float(donnees.get("vitesse_m_s_par_unite_pwm", vitesse_m_s_par_unite_pwm))
 	accel_max = float(donnees.get("acceleration_max_m_s2", accel_max))
 	distance_arret = float(donnees.get("distance_arret", distance_arret))
 	temps_pause_avant_recul = float(donnees.get("temps_pause_avant_recul", temps_pause_avant_recul))
+	distance_recul = float(donnees.get("distance_recul_m", distance_recul))
+	largeur_obstacle = float(donnees.get("largeur_obstacle_m", largeur_obstacle))
+	profondeur_obstacle = float(donnees.get("profondeur_obstacle_m", profondeur_obstacle))
+	marge_contournement = float(donnees.get("marge_contournement_m", marge_contournement))
+	angle_retour_ligne_deg = float(donnees.get("angle_retour_ligne_deg", angle_retour_ligne_deg))
 	direction_contournerment = float(donnees.get("direction_contournerment", direction_contournerment))
 
 	angle_braquage_max_deg = float(donnees.get("angle_braquage_max_deg", angle_braquage_max_deg))
