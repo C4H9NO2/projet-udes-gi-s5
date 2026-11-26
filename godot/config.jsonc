@@ -1,16 +1,16 @@
 {
 	// Temps avant que la voiture commence à bouger
-	"delai_depart_s": 3.0,
+	"delai_depart_s": 2.0,
 
-	"acceleration_max_m_s2": 0.065,
-	"vitesse_max_m_s": 0.075,
-  	"vitesse_moyenne_m_s": 0.065,
-  	"vitesse_faible_m_s": 0.055,
+	"acceleration_max_m_s2": 0.055,
+	// v_max = `overspeed_ratio` * v_min (v_min étant la vitesse max permise par `acceleration_max_m_s2` et `angle_braquage_max_deg`
+	"overspeed_ratio": 1.10,
+  	"vitesse_moyenne_m_s": 0.15,
+  	"vitesse_faible_m_s": 0.15,
 	
 	// Vitesse max de la voiture IRL
 	"vitesse_m_s_par_unite_pwm": 0.5769230769,
 	"angle_braquage_max_deg": 45,
-	"steer_speed_deg_per_s": 180,
 	// Correction de l'angle de braquage pour compenser le fait que la voiture ne va pas tout droit
 	"trim_direction_deg": -8.5,
 	

@@ -32,19 +32,16 @@ const X_ROUE_D = VOIE * 0.5		# position en x du centre de la roue droite (m)
 # --- Vitesse et direction actuels ---
 var vitesse = 0.0 # en m/s
 var direction = 0 # entre -1 et 1
-
-# --- Paramètres du capteur de distance --- (TODO : filtrer ?)
-var ray_collision_point = Vector3.ZERO
+var v_min := 0.0  # vitesse dans le virage le plus serré (m/s)
+var v_max := 0.0  # vitesse maximale en ligne droite (m/s)
 
 # --- Paramètres du suivi de ligne ---
 const LINE_FILTER = 18.0	# fréquence de coupure du filtre de position (rad/s)
 const RATE_FILTER = 10.0	# fréquence de coupure du filtre de dérivée de la position (rad/s)
 const STEER_P_GAIN = 0.5	# braquage par unité de position (0.5 = ancien mapping capteur 1)
 const STEER_D_GAIN = 0.010	# amortissement (unités de braquage par unité de dérivée de la position/s)
-const CURVE_ACCEL = 0.024	# accélération latérale conservée pour la bille (m/s²)
 
 # --- Variables issues des capteurs ---
-var distance_obstacle = 0.0
 var position_filtree := 0.0						# position de la ligne (+2 à -2) lissée par un filtre passe-bas
 var derniere_position_filtree := 0.0			# utile pour calculer la dérivée
 var derivee_filtree := 0.0						# dérivée filtrée de la position
@@ -52,7 +49,6 @@ var derniere_position_mesuree := 0.0			# utile pour savoir de quel côté la lig
 var temps_derniere_position_mesuree := 0.0		# utile pour savoir depuis combien de temps la ligne est perdue
 
 const TURN_ANGLE_BIG = 1
-const TURN_ACCEL = 1
 
 # Appelé par Godot au lancement
 func _ready():
@@ -65,10 +61,21 @@ func _ready():
 	roue_ar_g = find_child("roue_ar_g", true, false) as Node3D
 	roue_ar_d = find_child("roue_ar_d", true, false) as Node3D
 
+	var theta_max := deg_to_rad(Config.angle_braquage_max_deg)
+	v_min = sqrt((Config.accel_max * EMPATTEMENT * cos(theta_max)) / maxf(tan(theta_max), 0.0001))
+	v_max = v_min * maxf(Config.overspeed_ratio, 1.0)
+
 # Appelé par Godot à chaque tick physique
 func _physics_process(delta):
-	if not _is_car_connected():
-		_mettre_a_jour_distance_obstacle()
+	temps_ecoule += delta
+	if temps_ecoule < Config.delai_depart_s and not manual_control_enabled:
+		return
+
+	var distance_obstacle = _lire_capteur_distance()
+	var capteurs_ligne = _lire_capteurs_ligne()
+
+	var vitesse_cible := 0.0
+	var direction_cible := 0.0
 
 	if manual_control_enabled:
 		wall_state = WallState.FOLLOW_LINE
@@ -76,90 +83,81 @@ func _physics_process(delta):
 		var direction_input = (1.0 if Input.is_key_pressed(KEY_LEFT) else 0.0) - (1.0 if Input.is_key_pressed(KEY_RIGHT) else 0.0)
 		var velocity_input = (1.0 if Input.is_key_pressed(KEY_UP) else 0.0) - (1.0 if Input.is_key_pressed(KEY_DOWN) else 0.0)
 
-		direction = direction_input
-		vitesse = velocity_input * Config.vitesse_m_s_par_unite_pwm
+		direction_cible = direction_input
+		vitesse_cible = velocity_input * Config.vitesse_m_s_par_unite_pwm
 	else:
 		match wall_state:
 			WallState.FOLLOW_LINE:
-				line_follower_car_angle(delta)
+				if distance_obstacle < Config.distance_arret * 2.0:
+					wall_state = WallState.SLOW_DOWN
+
+				var consigne = _follow_line(capteurs_ligne, delta)
+				vitesse_cible = consigne[0]
+				direction_cible = consigne[1]
 
 			WallState.SLOW_DOWN:
+				direction_cible = 0.0
 				if distance_obstacle > Config.distance_arret * 1.5:
-					vitesse = move_toward(
-						vitesse,
-						Config.vitesse_moyenne,
-						Config.accel_max * delta
-					)
-					direction = move_toward(
-						direction,
-						0.0,
-						TURN_ACCEL * delta
-					)
+					vitesse_cible = Config.vitesse_moyenne
 				elif distance_obstacle > Config.distance_arret:
-					vitesse = move_toward(
-						vitesse,
-						Config.vitesse_faible,
-						Config.accel_max * delta
-					)
-					direction = move_toward(
-						direction,
-						0.0,
-						TURN_ACCEL * delta
-					)
+					vitesse_cible = Config.vitesse_faible
 				else:
-					vitesse = move_toward(
-						vitesse,
-						0.0,
-						Config.accel_max * delta
-					)
-					direction = move_toward(
-						direction,
-						0.0,
-						TURN_ACCEL * delta
-					)
+					vitesse_cible = 0.0
 					if abs(vitesse) < 0.001:
 						temps_avant_recul_ecoule = 0.0
 						wall_state = WallState.WAIT_BALL
 						
 			WallState.WAIT_BALL:
-				vitesse = 0.0
-				direction = 0.0
+				vitesse_cible = 0.0
+				direction_cible = 0.0
 				temps_avant_recul_ecoule += delta
 				if temps_avant_recul_ecoule >= Config.temps_pause_avant_recul:
 					temp_time = 0.0
 					wall_state = WallState.AVOID
 
 			WallState.AVOID:
-				wall_avoidance_loop(delta)
+				var consigne = wall_avoidance_loop(delta)
+				vitesse_cible = consigne[0]
+				direction_cible = consigne[1]
+
+	var mouvement_contraint = _appliquer_contraintes(vitesse_cible, direction_cible, delta)
+	vitesse = mouvement_contraint[0]
+	direction = mouvement_contraint[1]
 
 	if _is_car_connected():
 		nfsm.data_to_send["velocity"] = vitesse / Config.vitesse_m_s_par_unite_pwm
 		nfsm.data_to_send["direction"] = clampf(direction + Config.trim_direction_normalise, -1.0, 1.0)
 	else:
-		_deplacer(delta)
+		_deplacer_simulation(delta)
 
-# Met à jour la distance à l'obstacle et déclenche le contournement
-func _mettre_a_jour_distance_obstacle():
-	if ray.is_colliding():
-		ray_collision_point = ray.get_collision_point()
-		distance_obstacle = ray_collision_point.distance_to(ray.global_position)
-		if distance_obstacle < Config.distance_arret * 2.0 and wall_state == WallState.FOLLOW_LINE:
-			wall_state = WallState.SLOW_DOWN # Premier état du contournement
-
-func line_follower_car_angle(delta):
-	var sensors
-
+# Lit le capteur de distance (réel si la voiture est connectée, simulé sinon) et retourne sa valeur
+func _lire_capteur_distance() -> float:
 	if _is_car_connected():
-		sensors = nfsm.data_received['line_follower']
+		var distance_recue := float(nfsm.data_received.get("distance_recue", -1.0)) / 100.0
+		distance_recue = 0.988077 * distance_recue + 3.455385
+		return distance_recue if distance_recue > 0.0 else INF
 	else:
-		sensors = lfs.line_follower_array
+		if not ray.is_colliding():
+			return INF
 
-	# La position mesurée est va de -2 à 2 suivant le capteur actif.
+		var ray_collision_point = ray.get_collision_point()
+		return ray.global_position.distance_to(ray_collision_point) + 3.5
+
+
+# Lit les capteurs de ligne (réels si la voiture est connectée, simulés sinon) et retourne leurs valeurs
+func _lire_capteurs_ligne() -> Array:
+	if _is_car_connected():
+		return nfsm.data_received.get("line_follower", [0, 0, 0, 0, 0])
+	else:
+		return lfs.line_follower_array
+	
+func _follow_line(capteurs_ligne, delta) -> Array:
+	# La position mesurée va de -2 à 2 suivant le capteur actif.
 	# On prend le barycentre si plusieurs capteurs sont actifs en même temps :
 	var somme := 0.0
 	var nb_capteurs_actifs := 0
 	for i in 5:
-		if sensors[i]:
+		if capteurs_ligne[i]:
 			somme += 2 - i 
 			nb_capteurs_actifs += 1
 
@@ -184,81 +182,125 @@ func line_follower_car_angle(delta):
 	position_filtree = lerp(position_filtree, position_mesuree, alpha)
 
 	# On calcule la dérivée filtrée, pour amortir les oscillations
-	var taux := (position_mesuree - derniere_position_filtree) / maxf(delta, 0.0001)
-	derniere_position_filtree = position_mesuree
+	var taux := (position_filtree - derniere_position_filtree) / maxf(delta, 0.0001)
+	derniere_position_filtree = position_filtree
 	derivee_filtree = lerp(derivee_filtree, taux, 1.0 - exp(-RATE_FILTER * delta))
 
 	# Braquage proportionnel à l'écart latéral, amorti par sa dérivée (PD)
-	var angle_max: float = deg_to_rad(Config.angle_braquage_max_deg)
-	var steer_target: float = STEER_P_GAIN * position_filtree + STEER_D_GAIN * derivee_filtree
-	steer_target = clampf(steer_target, -1.0, 1.0)
+	var direction_cible: float = STEER_P_GAIN * position_filtree + STEER_D_GAIN * derivee_filtree
+	direction_cible = clampf(direction_cible, -1.0, 1.0)
 
-	# On borne l'accélération latérale de la trajectoire demandée.
-	var courbure: float = absf(tan(steer_target * angle_max)) / EMPATTEMENT
-	var vitesse_courbe: float = sqrt(CURVE_ACCEL / maxf(courbure, 0.001))
-	var vitesse_cible = clampf(vitesse_courbe, Config.vitesse_faible, Config.vitesse_max)
+	var vitesse_cible: float = v_max
 
 	# Tous les capteurs actifs -> arrêt
-	if (lfs.line_follower_array[0] || nfsm.data_received['line_follower'][0]) \
-	and (lfs.line_follower_array[1] || nfsm.data_received['line_follower'][1]) \
-	and (lfs.line_follower_array[2] || nfsm.data_received['line_follower'][2]) \
-	and (lfs.line_follower_array[3] || nfsm.data_received['line_follower'][3]) \
-	and (lfs.line_follower_array[4] || nfsm.data_received['line_follower'][4]):
-
+	if nb_capteurs_actifs == 5:
 		vitesse_cible = 0.0
 
-	# Braquage progressif (le servo ne tourne pas instantanément)
-	direction = move_toward(direction, steer_target, Config.steer_speed_normalise * delta)
-
-	# Accélération longitudinale limitée par le budget total d'accélération
-	var accel_lateral: float = vitesse * vitesse * courbure
-	var accel_longitudinale: float = sqrt(maxf(Config.accel_max * Config.accel_max - accel_lateral * accel_lateral, 0.0))
-	# On garde toujours une marge pour ralentir si la courbe est plus vive que prévu.
-	if vitesse_cible < vitesse:
-		accel_longitudinale = maxf(accel_longitudinale, Config.accel_max * 0.5)
-	vitesse = move_toward(vitesse, vitesse_cible, accel_longitudinale * delta)
+	return [vitesse_cible, direction_cible]
 
 var temp_time = 0.0
-func wall_avoidance_loop(delta):
-
+func wall_avoidance_loop(delta) -> Array:
 	print("IN WALL AVOIDANCE LOOP")
-	var steer_target = 0.0
+	var direction_cible = 0.0
 	
 	if temp_time < 4.5:
-		steer_target = -TURN_ANGLE_BIG * Config.direction_contournerment
+		direction_cible = -TURN_ANGLE_BIG * Config.direction_contournerment
 
 	elif temp_time < 13:
-		steer_target = TURN_ANGLE_BIG * Config.direction_contournerment
+		direction_cible = TURN_ANGLE_BIG * Config.direction_contournerment
 
 	elif temp_time < 15.5:
-		steer_target = -TURN_ANGLE_BIG * Config.direction_contournerment
+		direction_cible = -TURN_ANGLE_BIG * Config.direction_contournerment
 	
 	else:
 		temp_time = 0.0
 		wall_state = WallState.FOLLOW_LINE
-		return
-
-	direction = move_toward(
-		direction,
-		steer_target,
-		TURN_ACCEL * delta
-	)
-	vitesse = move_toward(
-		vitesse,
-		Config.vitesse_faible,
-		(Config.accel_max/2) * delta
-	)
+		return [0.0, 0.0]
 
 	temp_time += delta
+	return [Config.vitesse_faible, direction_cible]
+
+# Applique les contraintes d'accélération maximale et retourne [vitesse_contrainte, direction_contrainte].
+func _appliquer_contraintes(vitesse_cible: float, direction_cible: float, delta: float) -> Array:
+	var theta_max := deg_to_rad(Config.angle_braquage_max_deg)
+	var a_max := Config.accel_max
+
+	direction_cible = clampf(direction_cible, -1.0, 1.0)
+	vitesse_cible = clampf(vitesse_cible, -v_max, v_max)
+
+	# vitesse maximale permise par l'angle de braquage demandé (theta_virage) à l'essieu avant
+	var theta_virage := absf(direction_cible) * theta_max
+	if theta_virage > 0.0001:
+		var vitesse_virage := sqrt((a_max * EMPATTEMENT * cos(theta_virage)) / tan(theta_virage))
+		vitesse_cible = clampf(vitesse_cible, -vitesse_virage, vitesse_virage)
+
+	# répartition du budget d'accélération si on est en survitesse par rapport à vitesse_cible
+	var t := 0.0
+	if v_max > v_min and absf(vitesse) > absf(vitesse_cible):
+		t = clampf((absf(vitesse) - absf(vitesse_cible)) / (v_max - v_min), 0.0, 1.0)
+	var a_lat_max := sqrt(maxf(1.0 - t * t, 0.0)) * a_max
+
+	# limitation de l'angle de braquage par la vitesse actuelle : (tan(theta) / (L * cos(theta))) * v² <= a_lat_max
+	var direction_max_autorisee := 1.0
+	if absf(vitesse) > 0.001:
+		var theta_actuel_abs := absf(direction) * theta_max
+		var theta_max_autorise: float = atan((a_lat_max * EMPATTEMENT * cos(theta_actuel_abs)) / (vitesse * vitesse))
+		direction_max_autorisee = clampf(theta_max_autorise / maxf(theta_max, 0.0001), 0.0, 1.0)
+
+	var direction_cible_bridee := clampf(direction_cible, -direction_max_autorisee, direction_max_autorisee)
+
+	# limitation de la vitesse de braquage pour que a_centripète + a_braquage <= a_lat_max
+	#    a_centripète = tan(theta) / (L cos(theta)) * v²   et   a_braquage = vitesse de braquage / cos²(theta) * v
+	var theta_actuel := absf(direction) * theta_max
+	var a_centripete: float = (tan(theta_actuel) / (EMPATTEMENT * maxf(cos(theta_actuel), 0.0001))) * vitesse * vitesse
+	# en braquant vers l'intérieur, le coup de volant s'ajoute à la force centripète. en redressant, il la réduit.
+	var a_braquage_max := a_lat_max + a_centripete
+	if absf(direction_cible) > absf(direction):
+		a_braquage_max = a_lat_max - a_centripete
+	a_braquage_max = maxf(a_braquage_max, 0.0)
+
+	var vitesse_braquage_max := INF	# rad/s
+	if absf(vitesse) > 0.001:
+		var cos_theta := cos(theta_actuel)
+		vitesse_braquage_max = (a_braquage_max * cos_theta * cos_theta) / absf(vitesse)
+
+	var direction_contrainte := move_toward(direction, direction_cible_bridee, (vitesse_braquage_max / theta_max) * delta)
+
+	# mise à jour de la vitesse avec la contrainte exacte a_u² + a_n² <= a_max²
+	# a_u = dot(v) - v² tan²(theta) / L
+	# a_n = v² tan(theta) / L + dot(v) tan(theta) + v theta_point / cos²(theta)
+	var theta_nouveau := direction_contrainte * theta_max
+	var theta_point: float = (direction_contrainte - direction) * theta_max / delta
+	var cos_theta_nouveau := maxf(cos(theta_nouveau), 0.0001)
+	var tan_theta := tan(theta_nouveau)
+	var c_centripete: float = vitesse * vitesse * tan_theta / EMPATTEMENT
+	var b_braquage: float = vitesse * theta_point / (cos_theta_nouveau * cos_theta_nouveau)
+
+	# (1/cos²) v̇² + (2 B tan) v̇ + C² tan² + (C+B)² - a_max² <= 0
+	var a_quad := 1.0 / (cos_theta_nouveau * cos_theta_nouveau)
+	var b_quad: float = 2.0 * b_braquage * tan_theta
+	var somme_cb: float = c_centripete + b_braquage
+	var c_quad: float = c_centripete * c_centripete * tan_theta * tan_theta + somme_cb * somme_cb - a_max * a_max
+
+	var accel_min := 0.0
+	var accel_max := 0.0
+	var discriminant: float = b_quad * b_quad - 4.0 * a_quad * c_quad
+	if discriminant >= 0.0:
+		var racine := sqrt(discriminant)
+		accel_min = (-b_quad - racine) / (2.0 * a_quad)
+		accel_max = (-b_quad + racine) / (2.0 * a_quad)
+	else:
+		# aucun v̇ ne satisfait exactement la contrainte : on prend le minimum de la parabole
+		accel_min = -b_quad / (2.0 * a_quad)
+		accel_max = accel_min
+
+	var pas: float = clampf(vitesse_cible - vitesse, accel_min * delta, accel_max * delta)
+	var vitesse_contrainte: float = vitesse + pas
+
+	return [vitesse_contrainte, direction_contrainte]
 
 # Déplace la voiture simulée dans la scène 
-func _deplacer(delta: float) -> void:
-	temps_ecoule += delta
-	
-	if temps_ecoule < Config.delai_depart_s and not manual_control_enabled:
-		return
-
-	# angle de braquage demandé
+func _deplacer_simulation(delta: float) -> void:
 	var angle_cible = direction * Config.angle_braquage_max_deg
 
 	# modèle bicycle
